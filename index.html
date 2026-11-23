@@ -64,7 +64,7 @@ html.fosforo #chal .q{font-style:normal;font-size:1.45rem;line-height:1.05}
 #chal .op button{border:1px solid var(--ink);padding:5px 12px;border-radius:999px;cursor:pointer;font-size:.9rem;text-align:left}
 html.fosforo #chal .op button{border-radius:0;font-size:1.2rem}
 #chal .op button:hover:not(:disabled){background:var(--ink);color:var(--bg)}
-#chal .op button.no{text-decoration:line-through;color:var(--mute);border-color:var(--line);cursor:default}
+
 #chal .fb{color:var(--mute);font-size:.88rem}
 #chal .ok{color:var(--hot);font:400 1.08rem/1.3 var(--ft)}
 html.fosforo #chal .fb,html.fosforo #chal .ok{font-size:1.2rem;line-height:1.05}
@@ -110,7 +110,7 @@ html.fosforo #help p{font-size:1.32rem;line-height:1.12}html.fosforo #help small
 #chal .bad{color:var(--ink);font:500 1.08rem/1.3 var(--ft)}
 #chal .ex{color:var(--ink);font:400 1.02rem/1.35 var(--ft)}
 html.fosforo #chal .bad,html.fosforo #chal .ex{font-size:1.2rem;line-height:1.08}
-#chal .op button.picked{border-color:var(--hot);color:var(--hot)}
+
 #chal .rs{color:var(--mute);font-size:.82rem;margin-top:2px}#chal .rs button{border:0;border-bottom:1px solid var(--mute);padding:0;cursor:pointer;color:var(--mute)}#chal .rs button:hover{color:var(--hot);border-color:var(--hot)}
 html.fosforo #chal .rs{font-size:1.1rem}
 #zr{font-size:.85rem!important}#zr[hidden]{display:none}
@@ -122,8 +122,8 @@ footer{flex-direction:column;align-items:stretch;gap:6px;padding:4px 12px calc(1
 .cap{flex:none}.cap h2{font-size:1.45rem}html.fosforo .cap h2{font-size:1.7rem}
 .cap p{font-size:1rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}.cap p.open{display:block}html.fosforo .cap p{font-size:1.15rem}
 #chal{max-width:100%}#chal .q{font-size:1.1rem}#chal .op button{padding:7px 12px}
-.nav{flex-direction:row;align-items:center;gap:10px}
-.nav{align-items:flex-end}.pl{flex:1;min-width:0;max-width:none;justify-content:flex-start;gap:6px 12px}
+.nav{flex-direction:row;align-items:flex-end;gap:10px}
+.pl{flex:1;min-width:0;max-width:none;justify-content:flex-start;gap:6px 12px}
 .zb{flex:none;gap:6px}.zb button{width:40px;height:40px}
 #help{width:100%;border-left:0;padding:14px 16px 24px}#help h2{font-size:1.6rem}#help p{font-size:1.02rem}
 }
@@ -155,8 +155,8 @@ footer{grid-area:foot;flex-direction:column;align-items:stretch;gap:6px;padding:
 </header>
 <div class="stage" id="stage"><canvas id="cv" tabindex="0" role="img" aria-label="Animação do nível atual. Use os botões de zoom para mudar de nível."></canvas>
 <aside id="help" hidden aria-label="Como funciona"><div class="hh"><div><small>como funciona</small><h2 id="help-t"></h2></div><button type="button" id="help-x">fechar</button></div><div id="help-c"></div></aside></div>
-<div id="map" hidden role="dialog" aria-label="Mapa das cenas"></div>
-<div id="asm-ed" hidden role="dialog" aria-label="Editor Assembly">
+<div id="map" hidden role="dialog" aria-modal="true" aria-label="Mapa das cenas"></div>
+<div id="asm-ed" hidden role="dialog" aria-modal="true" aria-label="Editor Assembly">
   <div class="box">
     <h3>Programa personalizado</h3>
     <p>Até 12 instruções (endereços 0..11). Variáveis fixas: <b>um</b>=12 (valor 1), <b>a</b>=13, <b>b</b>=14, <b>c</b>=15.<br>Opcodes: NOP, LDA, ADD, SUB, STA, LDI, JMP, JZ, HLT.</p>
@@ -201,7 +201,7 @@ const TH={
  fosforo:{bg:'#020a04',ink:'#2fdc62',dim:'#0f5a28',mute:'#1c9447',hot:'#c9ffd8',glow:9,gc:'rgba(70,255,130,.9)',mono:'VT323,monospace',text:'VT323,monospace',fs:1.28,lay:{nd:'rgba(47,220,98,.30)',pd:'rgba(47,220,98,.13)',poly:'rgba(47,220,98,.62)',metal:'rgba(201,255,216,.30)'}}
 };
 let T=TH.papel;
-const S={a:5,b:3,path:[{id:'c'}],g:{a:1,b:1,cin:0},gl:{a:1,b:1,c:1},mx:{a:1,b:0,s:0},vg:0,lt:{d:1,en:1,q:1,src:'manual',ck:0,ckNow:0,ckOld:0,chg:-9},sram:false,dc:{x1:0,x0:1,m:0},ff:{d:1,m:0,q:0,mode:'ms',man:false,ck:0,ckNow:0,ckOld:0,chg:-9},st:{},mv:{v:0,manual:false,p:false},dope:'n',pn:0,pnw:50,gate:'nand',ins:0x2E,in3:false,ch:{draw:{},armed:false,on:false,res:{},last:'',pre:false},prog:0,rate:1,sub:0,aluf:'add',base:'dec',cla:false,cmosTest:{on:false,p:[1,1],n:[0,0]},temp:300,pipe:false,wave:[],waveT:0};
+const S={a:5,b:3,path:[{id:'c'}],g:{a:1,b:1,cin:0},gl:{a:1,b:1,c:1},mx:{a:1,b:0,s:0},lt:{d:1,en:1,q:1,src:'manual',ck:0,ckNow:0,ckOld:0,chg:-9},sram:false,dc:{x1:0,x0:1,m:0},ff:{d:1,m:0,q:0,mode:'ms',man:false,ck:0,ckNow:0,ckOld:0,chg:-9},st:{},mv:{v:0,manual:false,p:false},dope:'n',pn:0,pnw:50,gate:'nand',ins:0x2E,in3:false,ch:{draw:{},armed:false,on:false,res:{},last:''},prog:0,rate:1,sub:0,aluf:'add',base:'dec',cla:false,cmosTest:{on:false,p:[1,1],n:[0,0]},temp:300,pipe:false,wave:[],waveT:0};
 let uz=1,upx=0,upy=0,panT=0,kbdNav=false,queue=[],anim=null,zones=[],zFocus=-1,W=800,H=800,dpr=1,k=1,ox=0,oy=0,SA=1,last=0;
 
 /* ---------- lógica ---------- */
@@ -291,7 +291,8 @@ function parseAsm(txt){
     if(op===0||op===15){out.push([op,0]);continue;}
     if(tk.length<2)return {err:`Linha ${i+1}: "${mn}" exige um operando.`};
     const rawOp=tk[1].toLowerCase();
-    const val=rawOp in SYM_AD?SYM_AD[rawOp]:parseInt(rawOp,10);
+    if(rawOp in SYM_AD&&(op===5||op===6||op===7))return {err:`Linha ${i+1}: ${mn} usa um número de 0 a 15${op===5?'':' (o endereço de uma instrução)'}, não o nome de uma variável.`};
+    const val=rawOp in SYM_AD?SYM_AD[rawOp]:/^\d+$/.test(rawOp)?parseInt(rawOp,10):NaN;
     if(Number.isNaN(val)||val<0||val>15)return {err:`Linha ${i+1}: operando "${tk[1]}" deve ser 0..15 ou a, b, c, um.`};
     out.push([op,val]);
   }
@@ -305,29 +306,29 @@ function layoutMem(){const p=prog(),rows=[...p.code.keys(),-1,...Object.keys(p.n
 const pcY=n=>n<prog().code.length?CY[n]:GAPY;
 let segKey='',segVal=null;
 function cpuSegs(){
-  const key=S.prog+'|'+S.a+'|'+S.b;if(key===segKey)return segVal;
+  const key=S.prog+'|'+S.a+'|'+S.b+'|'+S.base;if(key===segKey)return segVal;
   const p=prog(),nm=p.names,mem0=initMem(),M={},rd=n=>n in M?M[n]:mem0(n),lab=n=>nm[n]||('o endereço '+n);
   const cyOf=n=>CY[n]!==undefined?CY[n]:GAPY;
   const fe=i=>[[310,cyOf(i)],[370,cyOf(i)],[370,182],[450,182]],toA=n=>[[310,cyOf(n)],[370,cyOf(n)],[370,427],[450,427]],toALU=n=>[[310,cyOf(n)],[370,cyOf(n)],[370,500],[675,500],[675,540]],
     riA=[[450,182],[370,182],[370,427],[450,427]],riPC=[[450,182],[370,182],[370,650],[160,650],[160,680]],aM=n=>[[450,427],[370,427],[370,cyOf(n)],[310,cyOf(n)]],aluA=[[600,680],[600,730],[770,730],[770,427],[610,427]];
   const sg=[{d:.9,ph:-1,txt:'O PC aponta para o endereço 0: o programa vai começar'}];let pc=0,A=0,n=0,end=false;
   while(n++<70&&!end&&pc<p.code.length){
-    const i=pc,op=p.code[i][0],x=p.code[i][1],by=op<<4|x,E=o=>sg.push(Object.assign({ph:2},o));
+    const i=pc,by=rd(i)&255,op=by>>4,x=by&15,E=o=>sg.push(Object.assign({ph:2},o));
     sg.push({d:1.7,ph:0,p:[fe(i)],v:[''],cell:i,hl:'ri pc',txt:`A memória entrega ao RI a instrução do endereço ${i}; o PC avança`,set:{ir:by,dec:-1},pc:i+1});
     sg.push({d:1.4,ph:1,p:[[[680,215],[680,265]]],v:[''],hl:'ri uc',txt:`A UC lê o opcode ${bin(op,4)} e reconhece ${dis(by,nm)}`,set:{dec:by}});
     pc=i+1;
     if(op===1){A=rd(x);E({d:1.7,p:[toA(x)],v:[A],cell:x,hl:'a',txt:`O valor de ${lab(x)} vai da memória para o acumulador`,set:{A}});}
     else if(op===2||op===3){const B=rd(x),r=(op===2?A+B:A-B)&255,sy=op===2?'+':'−';E({d:1.7,p:[toALU(x),[[525,460],[525,540]]],v:[B,A],cell:x,hl:'a alu',txt:`O valor de ${lab(x)} e o acumulador entram na ALU`});E({d:1,fl:()=>`${fmt8(A)} ${sy} ${fmt8(B)}`,hl:'alu',txt:()=>`A ALU calcula ${fmt8(A)} ${sy} ${fmt8(B)} = ${fmt8(r)}`});A=r;E({d:1.6,p:[aluA],v:[r],hl:'alu a',txt:'O resultado volta para o acumulador',set:{A}});}
     else if(op===4){M[x]=A;E({d:1.7,p:[aM(x)],v:[A],cell:x,hl:'a',txt:`O acumulador é gravado em ${lab(x)}`,set:{m:Object.assign({},M)}});}
-    else if(op===5){A=x;E({d:1.6,p:[riA],v:[x],hl:'ri a',txt:`A constante ${x} vem da própria instrução para o acumulador`,set:{A}});}
+    else if(op===5){A=x;E({d:1.6,p:[riA],v:[x],hl:'ri a',txt:`A constante ${fmt8(x)} vem da própria instrução para o acumulador`,set:{A}});}
     else if(op===6){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}
-    else if(op===7){const z=A===0;E({d:1.6,hl:'a uc',zf:1,txt:`O acumulador vale ${A} (Z = ${z?1:0}). É zero? ${z?'Sim: JZ vai desviar':'Não: segue para a próxima instrução'}`});if(z){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}}
-    else if(op===15){end=true;E({d:2.8,hl:'uc',txt:`HLT: o programa termina com c = ${rd(15)}`});}
+    else if(op===7){const z=A===0;E({d:1.6,hl:'a uc',zf:1,txt:`O acumulador vale ${fmt8(A)} (Z = ${z?1:0}). É zero? ${z?'Sim: JZ vai desviar':'Não: segue para a próxima instrução'}`});if(z){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}}
+    else if(op===15){end=true;E({d:2.8,hl:'uc',txt:`HLT: o programa termina com c = ${fmt8(rd(15))}`});}
   }
-  if(!end)sg.push({d:2.6,ph:2,txt:'A demonstração para aqui: o laço ainda teria muitas voltas'});
+  if(!end)sg.push({d:2.6,ph:2,txt:pc>=p.code.length?'O programa acabou sem HLT: o PC passou da última instrução':'A demonstração para aqui: o laço ainda teria muitas voltas'});
   segKey=key;segVal=sg;return sg;
 }
-const DUR={datapath:()=>uops().map(x=>x.ph===1?1.5:x.t==='parar'||x.t==='...'?2.8:2.3),cpu:()=>cpuSegs().map(x=>x.d),fab:()=>FAB.map(()=>2.8),c:()=>prog().grp?prog().grp.map(()=>3).concat([3.5]):prog().custom?prog().code.map(()=>1.6):[3.5,2.5,3,4.2,.8],alu:()=>(S.aluf==='add'||S.aluf==='sub')&&!S.cla?[1.4,.5,.5,.5,.5,.5,.5,.5,.5,4.6]:[1.4,1.0,7.6],mem:()=>Object.keys(CY).map(()=>1.9),reg:()=>[2,.6,1.9,2,.6,1.9],ff:()=>[1.6,1.6],dec:()=>[1.6,1.6,1.6,1.6],uc:()=>Array(9).fill(1.4),pc:()=>Array(4).fill(2.4)};
+const DUR={datapath:()=>uops().map(x=>x.ph===1?1.5:x.t==='parar'||x.t==='...'?2.8:2.3),cpu:()=>cpuSegs().map(x=>x.d),fab:()=>FAB.map(()=>2.8),c:()=>prog().grp?prog().grp.map(()=>3).concat([3.5]):prog().custom?prog().code.map(()=>1.6):[2.6,2.4,2.6,3,3.4],alu:()=>(S.aluf==='add'||S.aluf==='sub')&&!S.cla?[1.4,.5,.5,.5,.5,.5,.5,.5,.5,4.6]:[1.4,1.0,7.6],mem:()=>Object.keys(CY).flatMap(()=>[.95,.95]),reg:()=>[2,.6,1.9,2,.6,1.9],ff:()=>[1.6,1.6],dec:()=>[1.6,1.6,1.6,1.6],uc:()=>Array(9).fill(1.4),pc:()=>Array(16).fill(2.4)};
 const clk=id=>S.st[id]||(S.st[id]={t:0,run:true,until:0});
 function stepNow(id){const st=clk(id),d=DUR[id](),tot=d.reduce((q,x)=>q+x,0),base=Math.floor(st.t/tot)*tot,t=st.t-base;let acc=0,set=0;for(const x of d){acc+=x;if(t<acc-1e-4){st.until=base+acc+.002;set=1;break;}}if(!set)st.until=base+tot+d[0]+.002;st.run=true;}
 function stepPrev(id){
@@ -354,10 +355,10 @@ function sceneCustomAsm(t){
   Tx(`a = ${fmt8(S.a)}      b = ${fmt8(S.b)}      (clique em "editar código" para alterar)`,400,730,19,T.mute);
 }
 function sceneFlow(t){
-  const p=prog(),G=p.grp,per=3,tot=G.length*per+3.5;t%=tot;const gi=Math.min(G.length,Math.floor((t-.06<0?0:t-.06)/per)),f=(t-gi*per)/per,g=G[gi],L=p.code.length,ap=L>8?44:48,ly=i=>196+i*54,ay=i=>176+i*ap;
+  const p=prog(),G=p.grp,per=3,tot=G.length*per+3.5;t%=tot;const gi=Math.min(G.length,Math.floor((t+.01)/per)),f=Math.max(0,(t-gi*per)/per),g=G[gi],L=p.code.length,ap=L>8?44:48,ly=i=>196+i*54,ay=i=>176+i*ap;
   Tx('linguagem C',40,120,20,T.mute,'left',T.text);Tx('assembly',486,120,20,T.mute,'left',T.text);Tx('binário',652,120,20,T.mute,'left',T.text);
   p.src.forEach((q,i)=>Tx(q,40,ly(i),26,g&&g.s.includes(i)?T.hot:T.ink,'left'));
-  let k=0;p.code.forEach((q,i)=>{const by=q[0]<<4|q[1],go=G.findIndex(z=>z.a.includes(i)),on=go===gi,y=ay(i),a=go<gi||gi>=G.length?1:on?sstep(0,.3,f):0;
+  let k=0;p.code.forEach((q,i)=>{const by=q[0]<<4|q[1],go=G.findIndex(z=>z.a.includes(i)),on=go===gi,y=ay(i),a=go<gi||gi>=G.length?1:on?(clk('c').run?sstep(0,.3,f):1):0;
     Tx(String(i),470,y,19,T.mute,'right');al(a);Tx(dis(by,p.names),486,y,24,on?T.hot:T.ink,'left');Tx(bin(q[0],4)+' '+bin(q[1],4),652,y,19,on?T.hot:T.mute,'left');
     if(q[0]===6||q[0]===7){const x=438-k*17,yt=ay(q[1]),col=on?T.hot:T.mute;k++;Ln([[450,y],[x,y],[x,yt],[448,yt]],col,on?3:2,q[0]===7?[6,5]:null);Ln([[440,yt-6],[449,yt],[440,yt+6]],col,on?3:2);}
     al(1);});
@@ -388,12 +389,12 @@ function scene1(tc){
       ['1. busca',!br&&execIdx+2<P_.code.length?execIdx+2:-1,ph>=0]
     ];
     stg.forEach(([lb,idx,on],i)=>{
-      const x=170+i*230,insTxt=idx>=0?dis(P_.code[idx][0]<<4|P_.code[idx][1],NM):(br?'flush (bolha)':'fim (NOP)');
+      if(!on)idx=-1;const x=170+i*230,insTxt=!on?'—':idx>=0?dis((idx in st.m?st.m[idx]:mem0(idx))&255,NM):(br?'flush (bolha)':'fim (NOP)');
       Rc(x-104,22,208,52,idx>=0?(i===0?T.hot:T.ink):T.dim,i===0&&idx>=0?2.5:1.4,T.bg);
       Tx(lb,x,37,15,i===0&&idx>=0?T.hot:T.mute,'center',T.mono);
       Tx(insTxt,x,58,18,idx>=0?(i===0?T.hot:T.ink):(br?T.hot:T.dim),'center',T.mono);
     });
-    Tx(br?'Desvio tomado! O pipeline descarta (flush) as 2 instruções buscadas à frente e recarrega o PC':'Pipeline de 3 estágios: 3 instruções sobrepostas no tempo (throughput ideal = 1 instrução/ciclo)',400,100,19,br?T.hot:T.ink,'center',T.text);
+    Tx(br?'Desvio tomado! O pipeline descarta (flush) as 2 instruções buscadas à frente e recarrega o PC':ph<0?'Pipeline de 3 estágios: ainda vazio, a primeira busca vai começar':'Pipeline de 3 estágios: 3 instruções sobrepostas no tempo (throughput ideal = 1 instrução/ciclo)',400,100,19,br?T.hot:T.ink,'center',T.text);
   }
   c.save();c.translate(0,30);
   [[[370,Math.min(182,CY[0])],[370,CY[15]]],[[370,CY[15]],[370,650],[160,650],[160,680]],[[370,182],[450,182]],[[370,427],[450,427]],[[525,460],[525,540]],[[370,500],[675,500],[675,540]],[[600,680],[600,730],[770,730],[770,427],[610,427]],[[680,215],[680,265]]].forEach(p=>Ln(p,T.dim,2));
@@ -425,10 +426,10 @@ function aluCalc(){const f=S.aluf,a=S.a,b=S.b;
   return {s:f==='and'?a&b:f==='or'?a|b:f==='xor'?a^b:(~a&255),c:0,ar:0};}
 function scene2(t){
   t%=10;const f=S.aluf,F=ALUF[f],a=S.a,b=S.b,r=aluCalc(),X=i=>70+(7-i)*84,one=f==='not',ar=r.ar,sub=f==='sub',cla=ar&&S.cla;
-  const done=ar?(cla?t>2.4:t>5.5):t>2.2,raw=f==='add'?a+b:f==='sub'?a-b:0;
+  const sg=S.base==='sig',sv=x=>sg&&x>127?x-256:x,done=ar?(cla?t>2.39:t>5.39):t>2.2,raw=f==='add'?sv(a)+sv(b):f==='sub'?sv(a)-sv(b):0,ov=raw<(sg?-128:0)||raw>(sg?127:255),fr=x=>S.base==='hex'?(x<0?'−':'')+'0x'+Math.abs(x).toString(16).toUpperCase():String(x);
   Tx(one?`¬${fmt8(a)} = ${done?fmt8(r.s):'…'}`:`${fmt8(a)} ${F.sy} ${fmt8(b)} = ${done?fmt8(r.s):'…'}`,400,52,40,T.ink,'center',T.text);
   Tx(ar?`Unidade Aritmética ativa (${F.n}${cla?' · Vai-um Antecipado CLA':' · Vai-um em Cascata'})`:`Unidade Lógica ativa (${F.n}): sem vai-um, cada bit é calculado em paralelo`,400,88,18,T.hot,'center',T.text);
-  Tx(ar?(cla?'o CLA calcula todos os vai-uns em paralelo, com G = A·B e P = A⊕B':(sub?('A − B  =  A + ¬B + 1'+(done&&raw<0?`      em 8 bits, ${r.s} representa ${raw}`:'')):(done&&raw>255?`o resultado real, ${raw}, não cabe em 8 bits`:'o vai-um propaga em série do bit 0 ao bit 7'))):'cada fatia tem parte aritmética (Σ) e lógica (portas); o seletor escolhe a saída',400,114,16,T.mute,'center',T.text);
+  Tx(ar?(cla?'o CLA calcula todos os vai-uns em paralelo, com G = A·B e P = A⊕B':(sub?('A − B  =  A + ¬B + 1'+(done&&ov?(sg?`      o resultado real, ${raw}, não cabe em 8 bits com sinal`:`      em 8 bits, ${fmt8(r.s)} representa ${fr(raw)}`):'')):(done&&ov?`o resultado real, ${fr(raw)}, não cabe em 8 bits${sg?' com sinal':''}`:'o vai-um propaga em série do bit 0 ao bit 7'))):'cada fatia tem parte aritmética (Σ) e lógica (portas); o seletor escolhe a saída',400,114,16,T.mute,'center',T.text);
 
   Tx('A',30,156,21,T.mute,'center',T.text);if(!one)Tx('B',30,210,21,T.mute,'center',T.text);
   if(ar)Tx('B⊕SUB',30,266,13,T.mute,'center',T.text);
@@ -511,7 +512,8 @@ function sceneFlags(t,live){
   Ln([[BX(7),BT+14],[BX(7),190],[34,190],[34,640]],n?T.hot:T.dim,n?2.6:1.6);Ci(BX(7),190,3.5,null,0,n?T.hot:T.dim);term(34,656,15,n,16);Tx('N',34,690,20,T.ink,'center',T.text);
   // C e V
   const CX7=640,CX8=730;
-  if(ar){term(CX7,BT,14,c7,15);term(CX8,BT,14,c8,15);}else{term(CX7,BT,14,0,15);term(CX8,BT,14,0,15);}
+  const na=(x,y,r)=>{Ci(x,y,r,T.dim,1.5,T.bg);Tx('—',x,y,15,T.dim);};
+  if(ar){term(CX7,BT,14,c7,15);term(CX8,BT,14,c8,15);}else{na(CX7,BT,14);na(CX8,BT,14);}
   Tx('C7',CX7,BT-26,14,T.ink,'center',T.mono);Tx('C8',CX8,BT-26,14,T.ink,'center',T.mono);
   Tx('vai-uns do bit 7',685,BT+34,13,T.mute,'center',T.text);
   const vx=685,vy=440,u7=ar&&c7,u8=ar&&c8;
@@ -519,7 +521,7 @@ function sceneFlags(t,live){
   Ln([[CX8,BT+14],[CX8,380],[vx+11,380],[vx+11,vy-22]],u8?T.hot:T.dim,u8?2.6:1.6);
   Ln([[CX8,250],[770,250],[770,640]],u8?T.hot:T.dim,u8?2.6:1.6);Ci(CX8,250,3.5,null,0,u8?T.hot:T.dim);
   gsymV(vx,vy,'xor',1);Ln([[vx,vy+30],[vx,640]],ar&&v?T.hot:T.dim,ar&&v?2.6:1.6);
-  term(vx,656,15,ar?v:0,16);Tx('V',vx,690,20,T.ink,'center',T.text);term(770,656,15,ar?c8:0,16);Tx('C',770,690,20,T.ink,'center',T.text);
+  if(ar){term(vx,656,15,v,16);term(770,656,15,c8,16);}else{na(vx,656,15);na(770,656,15);}Tx('V',vx,690,20,T.ink,'center',T.text);Tx('C',770,690,20,T.ink,'center',T.text);
   Tx(ar?(v?'V = 1: estouro com sinal (o sinal do resultado está errado)':'V = C7 ⊕ C8: estouro com sinal'):'operação lógica: sem vai-um, C e V não se aplicam',400,762,16,ar&&v?T.hot:T.mute,'center',T.text);
 }
 /* 3 e 4: portas */
@@ -710,6 +712,7 @@ function sceneLay(t,live){
   else if(S.in3&&(k==='nand'||k==='nor'))Tx('versão de 2 entradas',400,104,17,T.mute,'center',T.text);
   else if(st.length>1)Tx(`dois estágios no silício: ${GT[st[0]].n} à esquerda ligado ao inversor (NOT) à direita`,400,104,17,T.mute,'center',T.text);
 
+  Object.assign(SCN.layout.hots.find(h=>h.to==='mosfet'),{x:gk==='not'?370:(gk==='nand'||gk==='nor')?290:206});
   let ps=[];
   noGlow(()=>{
     Ln([[130,205],[670,205],[670,395],[130,395],[130,205]],T.mute,1.5,[8,6]);Tx('poço N',142,222,18,T.mute,'left',T.text);
@@ -901,7 +904,7 @@ function sceneAtom(t){
 /* fabricação */
 const FAB=[['wafer','Um disco de silício tipo P, fatiado de um cristal único.'],['oxidação','No forno, uma camada fina de SiO₂ cresce na superfície.'],['polissilício','Uma camada de silício policristalino é depositada. Ela será a porta.'],['fotolitografia','A luz ultravioleta atravessa a máscara e sensibiliza a resina exposta.'],['corrosão','Tudo o que não ficou protegido é removido. Sobra a porta.'],['dopagem','Íons de fósforo são implantados. A própria porta serve de máscara.'],['metalização','Contatos de metal ligam fonte, porta e dreno ao resto do circuito.'],['transistor pronto','Milhões destes são feitos ao mesmo tempo, lado a lado, no mesmo chip.']];
 function sceneFab(t){
-  const tt=t%(FAB.length*2.8),i=Math.floor(tt/2.8),f=(tt/2.8)%1,g=sstep(.1,.8,f),done=n=>i>n?1:i===n?g:0;
+  const tt=t%(FAB.length*2.8),i=Math.floor(tt/2.8),f0=(tt/2.8)%1,f=!clk('fab').run&&f0<.1?.85:f0,g=sstep(.1,.8,f),done=n=>i>n?1:i===n?g:0;
   Tx(`${i+1} / ${FAB.length}   ${FAB[i][0]}`,400,66,32,T.ink,'center',T.text);Tx(FAB[i][1],400,108,21,T.mute,'center',T.text);
   c.save();c.translate(10,290);c.scale(1.5,1.5);
   const o=done(1),po=done(2),rs=i===3?sstep(0,.25,f):0,ra=i===3?1:i===4?1-sstep(.6,1,f):0,side=1-done(4),im=done(5),mt=done(6);
@@ -915,7 +918,7 @@ function sceneFab(t){
   if(i===5)for(let x=30;x<500;x+=20){const y=((t*80+x*7)%170)-40,sf=x>170&&x<350?90:130;if(y<sf)Ci(x,y,2.4,null,0,T.hot);}
   if(mt>0){al(mt);const dy=(1-mt)*-40;[[90,112],[380,112],[235,72]].forEach(([x,y])=>Rc(x,y+dy,50,18,T.ink,1.4,T.dim));al(1);}
   if(i===7){al(g);[[115,112,'fonte'],[260,72,'porta'],[405,112,'dreno']].forEach(([x,y,n])=>{Ln([[x,y],[x,y-34]],T.ink,1.6);Tx(n,x,y-46,13,T.ink,'center',T.text);});al(1);}
-  if(o>0&&i<3)Tx('SiO₂',260,124-12*o-28*po-8,10,T.mute,'center',T.text);
+  if(o>.4&&i<4)Tx('SiO₂',494,130-6*o,9,T.mute,'right',T.text);if(po>.4&&i<4)Tx('polissilício',494,118-14*po,10,T.ink,'right',T.text);
   c.restore();
 }
 
@@ -971,7 +974,7 @@ function sceneFF(t,live){
   const f=S.ff,now=performance.now()/1000,man=f.man||S.ch.on,ck=ffClock(t),ed=edgeStep(f,ck,now),pul=f.mode==='pulso';
   if(pul){if(ed.en)f.q=f.d;f.m=f.q;}else{if(!ck)f.m=f.d;else f.q=f.m;}
   const w=(p,v)=>Ln(p,v?T.hot:T.dim,v?3:2);
-  const wt=now;if(wt-S.waveT>.05){S.waveT=wt;S.wave.push(pul?[ck,ed.en,f.q]:[ck,f.m,f.q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=now;if((clk('ff').run||(f.man&&S.ch.on))&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(pul?[ck,ed.en,f.q]:[ck,f.m,f.q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Q = ${f.q}`,400,96,44,T.ink,'center',T.text);
   Tx(pul?'detector de borda: o latch abre só durante um pulso curto após a subida do relógio':'sem detector: na subida, o mestre fecha e o escravo abre no mesmo instante',400,140,18,T.mute,'center',T.text);
   if(!pul){
@@ -997,7 +1000,7 @@ function sceneFF(t,live){
   }
   term(70,350,14,f.d,15);Tx('D',70,320,22,T.ink,'center',T.text);term(70,565,14,ck,15);Tx(man?'relógio (toque)':'relógio',70,535,18,T.ink,'center',T.text);term(730,350,14,f.q,15);Tx('Q',730,320,22,T.ink,'center',T.text);
   drawWave(pul?['CLK','EN','Q']:['CLK','mestre','Q'],[S.wave.map(x=>x[0]),S.wave.map(x=>x[1]),S.wave.map(x=>x[2])],true);
-  if(live){zones.push({x:70,y:350,r:40,fn(){f.d^=1;}});zones.push({x:70,y:565,r:40,fn(){if(!f.man&&!S.ch.on)f.ck=f.ckNow;f.man=true;f.ck^=1;}});}
+  if(live){zones.push({x:70,y:350,r:40,fn(){f.d^=1;}});zones.push({x:70,y:565,r:40,fn(){const was=f.man;if(!f.man&&!S.ch.on)f.ck=f.ckNow;f.man=true;f.ck^=1;if(!was)renderCtl();}});}
 }
 /* latch D com NAND */
 const DL={sc:1.3,ox:10,oy:200,gates:[['nand',200,120,1],['nand',200,240,2],['nand',400,129,3],['nand',400,231,4]],
@@ -1006,7 +1009,7 @@ const DL={sc:1.3,ox:10,oy:200,gates:[['nand',200,120,1],['nand',200,240,2],['nan
  dots:[['en',120,267],['n1',270,138],['q',480,147],['qb',500,249]],ins:[['d',32,129,'D'],['en',32,267,'EN']],outs:[['q',574,147,'Q'],['qb',574,249,'¬Q']]};
 function sceneSram6T(t,live){
   const l=S.lt;if(l.en)l.q=l.d;const q=l.q,qb=1-q,wl=l.en;
-  const wt=performance.now()/1000;if(wt-S.waveT>.05){S.waveT=wt;S.wave.push([wl,l.d,q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=performance.now()/1000;if(clk('latch').run&&wt-S.waveT>.05){S.waveT=wt;S.wave.push([wl,l.d,q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Célula SRAM 6T   ·   Q = ${q}   (6 transistores em vez de 16)`,400,84,28,T.ink,'center',T.text);
   Tx(wl?'Wordline (WL) = 1: transistores de acesso M5 e M6 abrem passagem às Bitlines':'Wordline (WL) = 0: célula isolada; dois inversores cruzados (4T) seguram o bit',400,122,19,wl?T.hot:T.mute,'center',T.text);
 
@@ -1057,7 +1060,7 @@ function sceneLatch(t,live){
   const l=S.lt,bd=l.src==='borda',now=performance.now()/1000;
   if(bd){const ed=edgeStep(l,l.ck,now);l.en=ed.en;}
   if(l.en)l.q=l.d;const n1=1-(l.d&l.en),n2=1-(n1&l.en);
-  const wt=now;if(wt-S.waveT>.05){S.waveT=wt;S.wave.push(bd?[l.ck,l.en,l.q]:[l.en,l.d,l.q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=now;if(clk('latch').run&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(bd?[l.ck,l.en,l.q]:[l.en,l.d,l.q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Q = ${l.q}`,400,92,44,T.ink,'center',T.text);
   Tx(bd?(l.en?'pulso de EN: o latch abre só agora, logo após a subida do relógio':'EN vem do detector de borda: só a subida do relógio abre o latch'):(l.en?'EN = 1: copia D (transparente)':'EN = 0: lembra (travado)'),400,136,22,l.en?T.hot:T.mute,'center',T.text);
   gates(DL,{d:l.d,en:l.en,n1,n2,q:l.q,qb:1-l.q},t,live&&!bd?live:false,l);
@@ -1076,7 +1079,7 @@ const DD=(()=>{const g=[['not',162,22],['not',262,82]],w=[['x1',[[52,40],[162,40
   return {sc:1.35,ox:36,oy:160,gates:g,wires:w,dots:d,ins:[['x1',40,40,'X1'],['x0',40,100,'X0']],outs:o};})();
 function sceneDec(t,live){
   const d=S.dc;if(!d.m){const q=Math.floor(t/1.6)%4;d.x1=q>>1;d.x0=q&1;}const q=d.x1*2+d.x0,sig={x1:d.x1,x0:d.x0,nx1:1-d.x1,nx0:1-d.x0};for(let i=0;i<4;i++)sig['o'+i]=+(i===q);
-  Tx(`entrada ${d.x1}${d.x0}  →  linha ${bin(q,2)}`,400,100,40,T.ink,'center',T.mono);gates(DD,sig,t,live,d,()=>{d.m=1;});
+  Tx(`entrada ${d.x1}${d.x0}  →  linha ${bin(q,2)}`,400,100,40,T.ink,'center',T.mono);gates(DD,sig,t,live,d,()=>{if(!d.m){d.m=1;renderCtl();}});
 }
 /* unidade de controle */
 function sceneUC(t){
@@ -1094,12 +1097,12 @@ function sceneUC(t){
 }
 /* contador de programa */
 function scenePC(t){
-  const per=2.4,n=Math.floor(t/per)%4,f=(t%per)/per,P=[[450,380],[620,380],[620,220],[300,220],[300,330]];
+  const per=2.4,n=Math.floor(t/per)%16,f=(t%per)/per,P=[[450,380],[620,380],[620,220],[300,220],[300,330]];
   Tx(`PC = ${n}`,400,105,46,T.ink,'center',T.text);
   Ln(P,T.dim,2);Ln([[300,430],[300,580]],T.hot,3);Tx('endereço para a memória',300,612,22,T.mute,'center',T.text);
   Rc(150,330,300,100,f>.93?T.hot:T.ink,f>.93?4:1.5,T.bg);Tx(bin(n,4),300,382,50);Tx('registrador',150,314,20,T.mute,'left',T.text);
   Ci(620,380,40,T.ink,1.5,T.bg);Tx('+1',620,381,30);
-  const g=sstep(.1,.93,f),q=along(P,g);Ci(q[0],q[1],10,null,0,T.hot);Tx(String(g<.3?n:(n+1)%4),q[0]+16,q[1]-20,22,T.hot,'left');
+  const g=sstep(.1,.93,f),q=along(P,g);Ci(q[0],q[1],10,null,0,T.hot);Tx(g<.3?bin(n,4):bin((n+1)%16,4),q[0]+16,q[1]-20,22,T.hot,'left');
 }
 
 /* caminho de dados de tres barramentos, adaptado do ARC de Murdocca e Heuring */
@@ -1108,11 +1111,11 @@ const RY={},CB=200,AB=530,BB=580,RL=250,RR=480,ALY=590;
 RG.forEach((r,i)=>RY[r]=200+i*55);
 let uopKey='',uopVal=null;
 function uops(){
-  const key=S.prog+'|'+S.a+'|'+S.b;if(key===uopKey)return uopVal;
+  const key=S.prog+'|'+S.a+'|'+S.b+'|'+S.base;if(key===uopKey)return uopVal;
   const p=prog(),mem0=initMem(),M={},rd=n=>n in M?M[n]:mem0(n),R={pc:0,ri:0,a:0,t0:0,t1:0},q=[];
   const put=o=>{q.push(o);if(o.set)Object.assign(R,o.set);};
   let n=0,halt=false;
-  while(!halt&&n++<40&&q.length<110){
+  while(!halt&&n++<40&&q.length<110&&R.pc<p.code.length){
     const pc=R.pc,by=rd(pc),op=by>>4,x=by&15,nm=p.names[x]||x;
     put({ph:0,t:'RI ← M[PC]; LER',a:'pc',c:'ri',rd:1,bus:{a:pc,c:by},set:{ri:by},d:`O PC sai pelo barramento A e vira endereço na memória. O dado lido entra pelo MUX no barramento C e vai ao RI.`});
     put({ph:0,t:'PC ← INC(PC)',a:'pc',c:'pc',f:'INC',bus:{a:pc,c:(pc+1)&15},set:{pc:(pc+1)&15},d:'A mesma ALU incrementa o PC. Não existe somador separado.'});
@@ -1121,17 +1124,18 @@ function uops(){
     if(op===1){put(oper);const v=rd(x);put({ph:2,t:'A ← M[T0]; LER',a:'t0',c:'a',rd:1,bus:{a:x,c:v},set:{a:v},d:`T0 sai pelo barramento A como endereço; o valor de ${nm} volta da memória pelo MUX para o barramento C.`});}
     else if(op===2||op===3){put(oper);const v=rd(x);put({ph:2,t:'T1 ← M[T0]; LER',a:'t0',c:'t1',rd:1,bus:{a:x,c:v},set:{t1:v},d:`O valor de ${nm} é lido da memória e guardado em T1.`});
       const r=addsub(R.a,v,op===3?1:0),sy=op===3?'−':'+';
-      put({ph:2,t:`A ← ${op===3?'SUB':'ADD'}(A, T1)`,a:'a',b:'t1',c:'a',f:op===3?'SUB':'ADD',bus:{a:R.a,b:v,c:r.s},set:{a:r.s},d:`Os dois operandos saem ao mesmo tempo, A pelo barramento A e T1 pelo B. É para isso que servem dois barramentos de leitura: ${R.a} ${sy} ${v} = ${r.s}.`});}
+      put({ph:2,t:`A ← ${op===3?'SUB':'ADD'}(A, T1)`,a:'a',b:'t1',c:'a',f:op===3?'SUB':'ADD',bus:{a:R.a,b:v,c:r.s},set:{a:r.s},d:`Os dois operandos saem ao mesmo tempo, A pelo barramento A e T1 pelo B. É para isso que servem dois barramentos de leitura: ${fmt8(R.a)} ${sy} ${fmt8(v)} = ${fmt8(r.s)}.`});}
     else if(op===4){put(oper);M[x]=R.a;put({ph:2,t:'M[T0] ← A; ESCREVER',a:'t0',b:'a',wr:1,bus:{a:x,b:R.a},set:{m:Object.assign({},M)},d:`O endereço sai pelo barramento A e o dado pelo B direto para a memória. O barramento C fica ocioso.`});}
-    else if(op===5)put({ph:2,t:'A ← OPER(RI)',a:'ri',c:'a',f:'OPER',bus:{a:by,c:x},set:{a:x},d:`A constante ${x} vem do próprio RI, sem passar pela memória.`});
+    else if(op===5)put({ph:2,t:'A ← OPER(RI)',a:'ri',c:'a',f:'OPER',bus:{a:by,c:x},set:{a:x},d:`A constante ${fmt8(x)} vem do próprio RI, sem passar pela memória.`});
     else if(op===6)put({ph:2,t:'PC ← OPER(RI)',a:'ri',c:'pc',f:'OPER',bus:{a:by,c:x},set:{pc:x},d:`O destino do desvio está no operando e vai direto ao PC pelo barramento C.`});
-    else if(op===7){const z=R.a===0;put({ph:2,t:'testa Z',zf:1,d:`O acumulador vale ${R.a}. Flag Z = ${z?1:0}: ${z?'a UC ativa a micro-operação de desvio':'o desvio não acontece'}.`});
+    else if(op===7){const z=R.a===0;put({ph:2,t:'testa Z',zf:1,d:`O acumulador vale ${fmt8(R.a)}. Flag Z = ${z?1:0}: ${z?'a UC ativa a micro-operação de desvio':'o desvio não acontece'}.`});
       if(z)put({ph:2,t:'PC ← OPER(RI)',a:'ri',c:'pc',f:'OPER',bus:{a:by,c:x},set:{pc:x},d:'Com Z = 1, o operando vai ao PC.'});}
-    else if(op===15){halt=true;put({ph:2,t:'parar',d:`HLT: o sequenciador da UC para. c = ${rd(15)}.`});}
+    else if(op===15){halt=true;put({ph:2,t:'parar',d:`HLT: o sequenciador da UC para. c = ${fmt8(rd(15))}.`});}
+    else if(op===0)put({ph:2,t:'nada',d:'NOP: nenhuma micro-operação de execução. O ciclo só serviu para buscar e decodificar.'});
     else put({ph:2,t:'—',d:'Opcode sem micro-programa.'});
   }
-  if(!halt)q.push({ph:2,t:'...',d:'A demonstração para aqui: o laço ainda teria muitas voltas.'});
-  q.forEach(o=>o.d2=o.d);uopKey=key;uopVal=q;return q;
+  if(!halt)q.push({ph:2,t:'...',d:R.pc>=p.code.length?'O programa acabou sem HLT: o PC passou da última instrução. Num processador real, ele seguiria executando o que estivesse na memória.':'A demonstração para aqui: o laço ainda teria muitas voltas.'});
+  uopKey=key;uopVal=q;return q;
 }
 function wrapTx(str,x,y,size,col,maxw,lh,font){c.font=`${size*T.fs}px ${font||T.text}`;
   const ws=String(str).split(' '),ls=[];let cur='';
@@ -1218,7 +1222,7 @@ function sceneInstr(t,live){
   if(sel)Ln([[442,296],[442,RY(n)],[454,RY(n)]],T.hot,2.6);
   for(let i=0;i<16;i++){const y=RY(i),o=sel&&i===n,m=mem(i),lab=nm[i]?`${nm[i]} = ${fmt8(m)}`:i<p.code.length?dis(m,nm):'';
     Ci(460,y,5,o?T.hot:T.dim,1.5,o?T.hot:T.bg);Tx(`${String(i).padStart(2,' ')}  ${bin(m)}  ${lab}`,476,y,14,o?T.hot:T.ink,'left',T.mono);}
-  if(kind==='num')Tx(`o processador usa o próprio ${n}`,565,672,15,T.hot,'center',T.text);
+  if(kind==='num')Tx(`o processador usa o próprio ${fmt8(n)}`,565,672,15,T.hot,'center',T.text);
   const nl=TxW(fam?'ADD e SUB diferem só no bit 4. Na ALU, esse bit vira o fio SUB: inverte B e põe 1 no vai-um de entrada.':'Toque nos bits: o mesmo byte vira outra instrução ou aponta para outra variável.',704,16,fam?T.hot:T.ink);
   TxW('Cada bit é um fio: 1 é tensão alta, 0 é tensão baixa. Para o processador, a instrução é só este número.',704+nl*22+6,15,T.mute);
 }
@@ -1602,6 +1606,7 @@ function saveCh(){try{localStorage.setItem('c2si-prova2',JSON.stringify({draw:S.
 function okTxt(C){return typeof C.ok==='function'?C.ok():C.ok;}
 function answer(id,ok,pick){S.ch.res[id]={ok,pick,qi:S.ch.draw[id]};S.ch.armed=false;saveCh();chrome();}
 function resetCh(){S.ch.res={};S.ch.armed=false;drawCh(true);saveCh();}
+function chThaw(){for(const id in S.st){S.st[id].run=true;S.st[id].until=0;}S.dc.m=0;S.mv.manual=false;S.ff.man=false;S.wave=[];}
 function chFreeze(){if(!S.ch.on)return;const st=clk(cur());st.run=false;st.until=0;S.dc.m=1;S.mv.manual=true;if(!S.ff.man)S.ff.ck=S.ff.ckNow||0;}
 function chHtml(){const id=cur(),C=CH[id],r=S.ch.res[id];let h=`<span class="q">${C.q}</span>`;
   if(!r){
@@ -1628,7 +1633,7 @@ function drawScene(id,alpha,s,tx,ty,t,live){if(alpha<=.003)return;SA=alpha;setTr
   }al(1);}
 function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=stage.clientWidth||800;H=stage.clientHeight||800;const w=Math.round(W*dpr),h=Math.round(H*dpr);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}const k0=Math.min(W,H)/800;k=k0*uz;const lx=Math.max(0,(800*k-W)/2)+(uz>1?60:0),ly=Math.max(0,(800*k-H)/2)+(uz>1?60:0);upx=Math.max(-lx,Math.min(lx,upx));upy=Math.max(-ly,Math.min(ly,upy));ox=(W-800*k)/2+upx;oy=(H-800*k)/2+upy;}
 function paint(t){
-  fit();const dt=Math.max(0,Math.min(.1,t-last));last=t;S.vg+=((S.g.a?1:0)-S.vg)*Math.min(1,dt*5);
+  fit();const dt=Math.max(0,Math.min(.1,t-last));last=t;
   for(const id in S.st){const q=S.st[id];if(q.run){q.t+=dt*(id==='cpu'||id==='datapath'?S.rate:1);if(q.until&&q.t>=q.until){q.t=q.until;q.until=0;q.run=false;renderCtl();}}}
   if(!S.mv.manual){const r=$('#vgs');if(r)r.value=S.mv.v;}
   const sc=$('#scrub');if(sc&&DUR[cur()]&&document.activeElement!==sc){const d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);sc.value=Math.round(((clk(cur()).t%tot)/tot)*100);}
@@ -1664,25 +1669,28 @@ function renderCtl(){const id=cur(),q=CTL[id],st=clk(id);let h='';
   if(q==='pn')h=b('pn',0,'equilíbrio',S.pn===0)+b('pn',1,'direta',S.pn===1)+b('pn',2,'reversa',S.pn===2)+`<label for="temp"><span id="temp-val">${S.temp} K</span> <input id="temp" type="range" min="0" max="700" step="10" value="${S.temp}"></label>`;
   if(id==='latch')h=b('sram','',S.sram?'ver Latch 4 NAND (16T)':'ver Célula SRAM 6T',S.sram)+(S.sram?'':b('ltsrc','',S.lt.src==='borda'?'EN: detector de borda':'EN: manual',S.lt.src==='borda'));
   if(q==='ff')h=b('ffmode','ms','mestre-escravo',S.ff.mode==='ms')+b('ffmode','pulso','detector de borda',S.ff.mode==='pulso')+(S.ch.on?'':b('ffclk','',S.ff.man?'relógio manual':'relógio automático',S.ff.man));
+  if(id==='dec'&&S.dc.m&&!S.ch.on)h+=b('dcauto','','automático');
   h=b('base','',`base: ${baseLab()}`)+b('chal','',S.ch.on?`desafio ${nDone()}/${nTot()} · sair`:`desafio ${nDone()}/${nTot()}`,S.ch.on)+h;
-  if(DUR[id]){
+  if(DUR[id]&&!(id==='ff'&&S.ch.on)){
     const d=DUR[id](),tot=d.reduce((x,y)=>x+y,0),pct=Math.min(100,Math.round(((st.t%tot)/tot)*100));
     h+=b('prev','','« passo')+b('pp','',st.run&&!st.until?'pausar':'continuar')+b('step','','passo »')+`<input id="scrub" type="range" min="0" max="100" value="${pct}" aria-label="Linha do tempo">`;
-  }else{
+  }else if(!['flags','portas','mux','cmos','instr','escala','chip'].includes(id)){
     h+=b('pp','',st.run&&!st.until?'pausar':'continuar');
   }
   $('#ctl').innerHTML=h;}
-function openAsmEd(){const m=$('#asm-ed');$('#asm-txt').value=prog().raw||'';$('#asm-err').textContent='';m.hidden=false;$('#asm-txt').focus();}
-function ctlAct(act,v){const st=clk(cur());if(['mtype','mauto','dope','pn','op','prog','gate'].includes(act))S.ch.pre=false;
-  switch(act){case 'pp':st.run=!(st.run&&!st.until);st.until=0;break;case 'step':if(DUR[cur()])stepNow(cur());break;case 'prev':if(DUR[cur()])stepPrev(cur());break;case 'mtype':S.mv.p=!S.mv.p;break;case 'mauto':S.mv.manual=false;break;case 'dope':S.dope=v;break;case 'pn':S.pn=+v;break;case 'gate':S.gate=v;S.cmosTest.on=false;break;case 'cmostest':S.cmosTest.on=!S.cmosTest.on;if(S.cmosTest.on){const A=S.gl.a,B=S.gl.b;S.cmosTest.p=[1-A,1-B];S.cmosTest.n=[A,B];}break;case 'cla':S.cla=!S.cla;clk('alu').t=0;clk('alu').until=0;break;case 'pipe':S.pipe=!S.pipe;break;case 'in3':S.in3=!S.in3;break;case 'ffmode':S.ff.mode=v;S.wave=[];Object.assign(SCN.ff.hots[0],v==='pulso'?{x:440,y:270}:{x:200,y:270});break;case 'ffclk':if(!S.ff.man)S.ff.ck=S.ff.ckNow;S.ff.man=!S.ff.man;break;case 'ltsrc':S.lt.src=S.lt.src==='borda'?'manual':'borda';S.lt.ck=0;S.wave=[];break;case 'sram':S.sram=!S.sram;applyLayout();break;case 'base':S.base=S.base==='dec'?'sig':S.base==='sig'?'hex':'dec';break;case 'editasm':openAsmEd();return;case 'op':S.aluf=v;loadBit();clk('alu').t=0;clk('alu').until=0;break;case 'prog':setProg(+v);break;case 'rate':S.rate=S.rate>=4?1:S.rate*2;break;case 'chal':S.ch.on=!S.ch.on;if(S.ch.on)chFreeze();chrome();return;}
+let dlgRet=null;function dlgBack(){const r=dlgRet;dlgRet=null;if(r&&document.contains(r))r.focus();else cv.focus();}
+function closeAsmEd(){$('#asm-ed').hidden=true;dlgBack();}
+function openAsmEd(){dlgRet=document.activeElement;const m=$('#asm-ed');$('#asm-txt').value=prog().raw||'';$('#asm-err').textContent='';m.hidden=false;$('#asm-txt').focus();}
+function ctlAct(act,v){const st=clk(cur());if(cur()==='dec'&&['pp','step','prev','dcauto'].includes(act))S.dc.m=0;if(cur()==='ff'&&!S.ch.on&&['pp','step','prev'].includes(act))S.ff.man=false;
+  switch(act){case 'pp':st.run=!(st.run&&!st.until);st.until=0;break;case 'step':if(DUR[cur()])stepNow(cur());break;case 'prev':if(DUR[cur()])stepPrev(cur());break;case 'mtype':S.mv.p=!S.mv.p;break;case 'mauto':S.mv.manual=false;break;case 'dope':S.dope=v;break;case 'pn':S.pn=+v;break;case 'gate':S.gate=v;S.cmosTest.on=false;break;case 'cmostest':S.cmosTest.on=!S.cmosTest.on;if(S.cmosTest.on){const A=S.gl.a,B=S.gl.b;S.cmosTest.p=[1-A,1-B];S.cmosTest.n=[A,B];}break;case 'cla':S.cla=!S.cla;clk('alu').t=0;clk('alu').until=0;break;case 'pipe':S.pipe=!S.pipe;break;case 'in3':S.in3=!S.in3;break;case 'dcauto':st.run=true;st.until=0;break;case 'ffmode':S.ff.mode=v;S.wave=[];Object.assign(SCN.ff.hots[0],v==='pulso'?{x:440,y:270}:{x:200,y:270});break;case 'ffclk':if(!S.ff.man)S.ff.ck=S.ff.ckNow;S.ff.man=!S.ff.man;break;case 'ltsrc':S.lt.src=S.lt.src==='borda'?'manual':'borda';S.lt.ck=0;S.wave=[];break;case 'sram':S.sram=!S.sram;S.wave=[];applyLayout();break;case 'base':S.base=S.base==='dec'?'sig':S.base==='sig'?'hex':'dec';break;case 'editasm':openAsmEd();return;case 'op':S.aluf=v;loadBit();clk('alu').t=0;clk('alu').until=0;break;case 'prog':setProg(+v);break;case 'rate':S.rate=S.rate>=4?1:S.rate*2;break;case 'chal':S.ch.on=!S.ch.on;if(S.ch.on)chFreeze();else chThaw();chrome();return;}
   syncUrl();renderCtl();}
 /* mapa */
 function mapHtml(){const seen=new Set(),walk=id=>{seen.add(id);const kids=SCN[id].hots.map(h=>h.to).filter(k=>!seen.has(k)&&seen.add(k));
     return `<li><button type="button" data-go="${id}"${id===cur()?' aria-current="page"':''}>${SCN[id].n}${S.ch.res[id]?(S.ch.res[id].ok?' <span class="ck">✓</span>':' <span class="ck">✗</span>'):''}</button>${kids.length?'<ul>'+kids.map(walk).join('')+'</ul>':''}</li>`;};
   return `<div class="mh"><h2>Mapa</h2><button type="button" data-close="1">fechar</button></div><p>Começar por disciplina</p><div class="ms">${[['Programação','c'],['Arquitetura de computadores','cpu'],['Eletrônica digital','fa'],['Fundamentos da eletrônica','mosfet']].map(([n,id])=>`<button type="button" data-go="${id}">${n}</button>`).join('')}</div><p>Todas as cenas · ${nDone()} de ${nTot()} desafios respondidos · ${nOk()} certos</p><ul class="mt">${walk('c')}</ul><p><button type="button" data-reset="1" class="rs">refazer desafios</button></p>`;}
-function openMap(o){const m=$('#map');m.hidden=!o;if(o){m.innerHTML=mapHtml();const b=m.querySelector('[aria-current]');if(b)b.focus();}}
+function openMap(o){const m=$('#map');if(o&&m.hidden)dlgRet=document.activeElement;const was=!m.hidden;m.hidden=!o;if(!o&&was)dlgBack();if(o){m.innerHTML=mapHtml();const b=m.querySelector('[aria-current]');if(b)b.focus();}}
 function jumpTo(id){const p=findPath(id);if(!p)return;queue=[];anim=null;S.path=p;S.wave=[];zFocus=-1;const q=clk(id);q.t=0;q.until=0;chrome();}
-function zin(h){if(anim||queue.length)return;S.wave=[];zFocus=-1;h=h||SCN[cur()].hots.find(x=>x.main)||SCN[cur()].hots[0];if(h){if(h.gate){S.gate=h.gate;S.ch.pre=false;}const q=clk(h.to);q.t=0;q.until=0;queue.push({hot:h});}}
+function zin(h){if(anim||queue.length)return;S.wave=[];zFocus=-1;h=h||SCN[cur()].hots.find(x=>x.main)||SCN[cur()].hots[0];if(h){if(h.gate){S.gate=h.gate;S.cmosTest.on=false;}const q=clk(h.to);q.t=0;q.until=0;queue.push({hot:h});}}
 function zout(n){if(anim||queue.length||n===0)return;S.wave=[];zFocus=-1;for(let i=0;i<(n||1);i++)queue.push({out:1});}
 function setTheme(n){T=TH[n];document.documentElement.className=n;$('#theme').textContent=n==='papel'?'fósforo':'papel';try{localStorage.setItem('c2si-tema',n);}catch(e){}}
 function hotAt(x,y){if(cur()==='cmos'&&S.cmosTest.on)return null;return SCN[cur()].hots.filter(h=>x>=h.x-14&&x<=h.x+h.w+14&&y>=h.y-14&&y<=h.y+h.h+14).sort((p,q)=>p.w*p.h-q.w*q.h)[0]||null;}
@@ -1691,17 +1699,17 @@ $('#crumbs').addEventListener('click',e=>{const b=e.target.closest('button');if(
 $('#zin').addEventListener('click',()=>zin());$('#zout').addEventListener('click',()=>zout());
 $('#ctl').addEventListener('click',e=>{const b=e.target.closest('button');if(b)ctlAct(b.dataset.act,b.dataset.v);});
 $('#ctl').addEventListener('input',e=>{
-  if(e.target.id==='vgs'){const was=S.mv.manual;S.mv.manual=true;S.ch.pre=false;S.mv.v=+e.target.value;if(!was){renderCtl();const r=$('#vgs');if(r)r.focus();}}
+  if(e.target.id==='vgs'){const was=S.mv.manual;S.mv.manual=true;S.mv.v=+e.target.value;if(!was){renderCtl();const r=$('#vgs');if(r)r.focus();}}
   if(e.target.id==='temp'){S.temp=+e.target.value;const tv=$('#temp-val');if(tv)tv.textContent=S.temp+' K';syncUrl();}
-  if(e.target.id==='scrub'&&DUR[cur()]){const st=clk(cur()),d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);st.t=(+e.target.value/100)*tot;st.until=0;st.run=false;}
+  if(e.target.id==='scrub'&&DUR[cur()]){if(cur()==='dec')S.dc.m=0;if(cur()==='ff'&&!S.ch.on)S.ff.man=false;const st=clk(cur()),d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);st.t=(+e.target.value/100)*tot;st.until=0;st.run=false;}
 });
 $('#ctl').addEventListener('change',e=>{if(e.target.id==='scrub')renderCtl();});
-$('#asm-cancel').addEventListener('click',()=>{$('#asm-ed').hidden=true;});
+$('#asm-cancel').addEventListener('click',closeAsmEd);
 $('#asm-save').addEventListener('click',()=>{
   const raw=$('#asm-txt').value,res=parseAsm(raw);
   if(res.err){$('#asm-err').textContent=res.err;return;}
   PROGS[3].code=res.code;PROGS[3].raw=raw;segKey='';uopKey='';
-  setProg(3);$('#asm-ed').hidden=true;renderCtl();
+  setProg(3);renderCtl();closeAsmEd();
 });
 $('#mapb').addEventListener('click',()=>openMap(true));
 $('#map').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.reset){resetCh();chrome();openMap(true);return;}if(b.dataset.go)jumpTo(b.dataset.go);openMap(false);});
@@ -1713,12 +1721,13 @@ $('#chal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   if(b.dataset.confirm){answer(id,!!C.check());return;}
   if(b.dataset.pick!==undefined){const i=+b.dataset.pick;answer(id,i===C.ans,i);}});
 $('#helpb').addEventListener('click',()=>toggleHelp());$('#zr').addEventListener('click',viewReset);$('#capt').addEventListener('click',()=>$('#capt').classList.toggle('open'));$('#help-x').addEventListener('click',()=>toggleHelp(false));
+document.addEventListener('fullscreenchange',()=>{$('#fs').textContent=document.fullscreenElement?'sair da tela cheia':'tela cheia';});
 if(document.fullscreenEnabled)$('#fs').addEventListener('click',()=>{try{(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>{});}catch(e){}});else $('#fs').hidden=true;
 $('#theme').addEventListener('click',()=>setTheme(T===TH.papel?'fosforo':'papel'));
 $('#vals').addEventListener('submit',e=>e.preventDefault());
 ['a','b'].forEach(n=>$('#in-'+n).addEventListener('input',e=>{const v=Math.max(0,Math.min(255,parseInt(e.target.value,10)||0));S[n]=v;
   if(e.target.value!==''&&String(v)!==e.target.value)e.target.value=v;
-  ['cpu','alu','reg','datapath'].forEach(id=>{const q=clk(id);q.t=0;q.until=0;});loadBit();S.ch.pre=false;syncUrl();if(S.ch.on)chrome();}));
+  ['cpu','alu','reg','datapath'].forEach(id=>{const q=clk(id);q.t=0;q.until=0;});loadBit();syncUrl();if(S.ch.on)chrome();}));
 /* pinça e arrasto: ampliam a cena sem trocar de nível */
 function viewReset(){uz=1;upx=upy=0;const b=$('#zr');if(b)b.hidden=true;}
 function viewZoom(nz,mx,my){const r=cv.getBoundingClientRect(),x=mx-r.left,y=my-r.top,vx=(x-ox)/k,vy=(y-oy)/k,k0=Math.min(W,H)/800;uz=Math.max(1,Math.min(4,nz));const nk=k0*uz;upx=x-vx*nk-(W-800*nk)/2;upy=y-vy*nk-(H-800*nk)/2;if(uz===1)upx=upy=0;$('#zr').hidden=uz===1;}
@@ -1732,23 +1741,24 @@ cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(
 ['pointerup','pointercancel','pointerleave'].forEach(n=>cv.addEventListener(n,e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)drag=null;}));
 cv.addEventListener('dblclick',()=>{if(uz>1)viewReset();});
 cv.addEventListener('click',e=>{if(anim||Date.now()-panT<350)return;const [x,y]=pt(e);
-  for(const z of zones){const hit=z.box?(x>=z.box[0]&&x<=z.box[0]+z.box[2]&&y>=z.box[1]&&y<=z.box[1]+z.box[3]):Math.hypot(x-z.x,y-z.y)<=z.r;if(hit){z.fn();S.ch.pre=false;return;}}
+  for(const z of zones){const hit=z.box?(x>=z.box[0]&&x<=z.box[0]+z.box[2]&&y>=z.box[1]&&y<=z.box[1]+z.box[3]):Math.hypot(x-z.x,y-z.y)<=z.r;if(hit){z.fn();return;}}
   const h=hotAt(x,y);if(h)zin(h);});
 cv.addEventListener('mousemove',e=>{if(anim){cv.style.cursor='default';cv.title='';return;}
   const [x,y]=pt(e),z=zones.some(q=>q.box?(x>=q.box[0]&&x<=q.box[0]+q.box[2]&&y>=q.box[1]&&y<=q.box[1]+q.box[3]):Math.hypot(x-q.x,y-q.y)<=q.r),h=!z&&hotAt(x,y);
   cv.style.cursor=z||h?'pointer':'default';cv.title=h?'Abrir: '+SCN[h.to].n:'';});
 cv.addEventListener('mouseleave',()=>{cv.title='';});
-let wl=0;stage.addEventListener('wheel',e=>{e.preventDefault();if(e.ctrlKey){viewZoom(uz*Math.exp(-e.deltaY/120),e.clientX,e.clientY);return;}const n=Date.now();if(anim||n-wl<500||Math.abs(e.deltaY)<4)return;wl=n;if(e.deltaY<0){const [x,y]=pt(e);zin(hotAt(x,y));}else zout();},{passive:false});
+let wl=0;stage.addEventListener('wheel',e=>{if(e.target.closest&&e.target.closest('#help'))return;e.preventDefault();if(e.ctrlKey){viewZoom(uz*Math.exp(-e.deltaY/120),e.clientX,e.clientY);return;}const n=Date.now();if(anim||n-wl<500||Math.abs(e.deltaY)<4)return;wl=n;if(e.deltaY<0){const [x,y]=pt(e);zin(hotAt(x,y));}else zout();},{passive:false});
 cv.addEventListener('focus',()=>{zFocus=zones.length?0:-1;});
 cv.addEventListener('pointerdown',()=>{kbdNav=false;});
 cv.addEventListener('blur',()=>{zFocus=-1;});
-document.addEventListener('keydown',e=>{if(!$('#asm-ed').hidden){if(e.key==='Escape')$('#asm-ed').hidden=true;return;}
+document.addEventListener('keydown',e=>{if(e.key==='Tab')kbdNav=true;if(!$('#asm-ed').hidden){if(e.key==='Escape')closeAsmEd();return;}
 if(e.ctrlKey||e.metaKey||e.altKey||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
   if(e.key==='?'||e.key==='h'){toggleHelp();e.preventDefault();return;}if(e.key==='Escape'&&!$('#help').hidden){toggleHelp(false);e.preventDefault();return;}if(!$('#map').hidden){if(e.key==='Escape'||e.key==='m')openMap(false);return;}
+  if(!$('#help').hidden&&e.key!=='Tab')return;
   if(document.activeElement===cv&&zones.length){
     if(e.key==='Tab')kbdNav=true;
     if(e.key==='Tab'){if(!e.shiftKey&&zFocus<zones.length-1){zFocus++;e.preventDefault();return;}if(e.shiftKey&&zFocus>0){zFocus--;e.preventDefault();return;}}
-    if((e.key==='Enter'||e.key===' ')&&zFocus>=0&&zFocus<zones.length){zones[zFocus].fn();S.ch.pre=false;e.preventDefault();return;}
+    if((e.key==='Enter'||e.key===' ')&&zFocus>=0&&zFocus<zones.length){zones[zFocus].fn();e.preventDefault();return;}
   }
   if(e.key===' '&&e.target.tagName!=='BUTTON'){ctlAct('pp');e.preventDefault();}if(e.key==='.'||e.key==='n'){ctlAct('step');e.preventDefault();}if(e.key===','){ctlAct('prev');e.preventDefault();}if(e.key==='m')openMap(true);if(e.key==='d')ctlAct('chal');if(e.key==='v')setTheme(T===TH.papel?'fosforo':'papel');if(e.key==='f'&&!$('#fs').hidden)$('#fs').click();if(['ArrowDown','ArrowRight','+','='].includes(e.key)){zin();e.preventDefault();}if(['ArrowUp','ArrowLeft','-','Escape'].includes(e.key)){zout();e.preventDefault();}});
 function syncUrl(){try{const h=cur();if(location.hash.slice(1)!==h)history.replaceState(null,'','#'+h);}catch(e){}}
