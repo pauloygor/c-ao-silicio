@@ -321,7 +321,7 @@ function cpuSegs(){
     sg.push({d:1.4,ph:1,p:[[[680,215],[680,265]]],v:[''],hl:'ri uc',txt:`A UC lê o opcode ${bin(op,4)} e reconhece ${dis(by,nm)}`,set:{dec:by}});
     pc=i+1;
     if(op===1){A=rd(x);E({d:1.7,p:[toA(x)],v:[A],cell:x,hl:'a',txt:`O valor de ${lab(x)} vai da memória para o acumulador`,set:{A}});}
-    else if(op===2||op===3){const B=rd(x),r=(op===2?A+B:A-B)&255,sy=op===2?'+':'−';E({d:1.7,p:[toALU(x),[[525,460],[525,540]]],v:[B,A],cell:x,hl:'a alu',txt:`O valor de ${lab(x)} e o acumulador entram na ALU`});E({d:1,fl:()=>`${fmt8(A)} ${sy} ${fmt8(B)}`,hl:'alu',txt:()=>`A ALU calcula ${fmt8(A)} ${sy} ${fmt8(B)} = ${fmt8(r)}`});A=r;E({d:1.6,p:[aluA],v:[r],hl:'alu a',txt:'O resultado volta para o acumulador',set:{A}});}
+    else if(op===2||op===3){const B=rd(x),A0=A,r=(op===2?A+B:A-B)&255,sy=op===2?'+':'−';E({d:1.7,p:[toALU(x),[[525,460],[525,540]]],v:[B,A],cell:x,hl:'a alu',txt:`O valor de ${lab(x)} e o acumulador entram na ALU`});E({d:1,fl:()=>`${fmt8(A0)} ${sy} ${fmt8(B)}`,hl:'alu',txt:()=>`A ALU calcula ${fmt8(A0)} ${sy} ${fmt8(B)} = ${fmt8(r)}`});A=r;E({d:1.6,p:[aluA],v:[r],hl:'alu a',txt:'O resultado volta para o acumulador',set:{A}});}
     else if(op===4){M[x]=A;E({d:1.7,p:[aM(x)],v:[A],cell:x,hl:'a',txt:`O acumulador é gravado em ${lab(x)}`,set:{m:Object.assign({},M)}});}
     else if(op===5){A=x;E({d:1.6,p:[riA],v:[x],hl:'ri a',txt:`A constante ${fmt8(x)} vem da própria instrução para o acumulador`,set:{A}});}
     else if(op===6){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}
