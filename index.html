@@ -127,6 +127,7 @@ footer{flex-direction:column;align-items:stretch;gap:6px;padding:4px 12px calc(1
 .zb{flex:none;gap:6px}.zb button{width:40px;height:40px}
 #help{width:100%;border-left:0;padding:14px 16px 24px}#help h2{font-size:1.6rem}#help p{font-size:1.02rem}
 }
+@media (max-width:420px){#vals{gap:4px 8px;flex-wrap:wrap;overflow:visible}#vals input{width:2.6em}}
 @media (max-width:560px) and (max-height:700px){.cap h2{font-size:1.2rem}footer{max-height:50vh}}
 @media (max-height:520px) and (orientation:landscape){
 body{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,44%);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"stage head" "stage foot"}
@@ -159,7 +160,7 @@ footer{grid-area:foot;flex-direction:column;align-items:stretch;gap:6px;padding:
 <div id="asm-ed" hidden role="dialog" aria-modal="true" aria-label="Editor Assembly">
   <div class="box">
     <h3>Programa personalizado</h3>
-    <p>Até 12 instruções (endereços 0..11). Variáveis fixas: <b>um</b>=12 (valor 1), <b>a</b>=13, <b>b</b>=14, <b>c</b>=15.<br>Opcodes: NOP, LDA, ADD, SUB, STA, LDI, JMP, JZ, HLT.</p>
+    <p>Até 12 instruções (endereços 0..11). Variáveis fixas: <b>um</b>=12 (valor 1), <b>a</b>=13, <b>b</b>=14, <b>c</b>=15.<br>Opcodes: NOP, LDA, ADD, SUB, STA, LDI, JMP, JZ, CALL, RET, HLT. CALL e RET usam uma pilha de retorno de 4 níveis.</p>
     <textarea id="asm-txt" spellcheck="false" aria-label="Código Assembly"></textarea>
     <div class="err" id="asm-err"></div>
     <div class="row">
@@ -201,7 +202,7 @@ const TH={
  fosforo:{bg:'#020a04',ink:'#2fdc62',dim:'#0f5a28',mute:'#1c9447',hot:'#c9ffd8',glow:9,gc:'rgba(70,255,130,.9)',mono:'VT323,monospace',text:'VT323,monospace',fs:1.28,lay:{nd:'rgba(47,220,98,.30)',pd:'rgba(47,220,98,.13)',poly:'rgba(47,220,98,.62)',metal:'rgba(201,255,216,.30)'}}
 };
 let T=TH.papel;
-const S={a:5,b:3,path:[{id:'c'}],g:{a:1,b:1,cin:0},gl:{a:1,b:1,c:1},mx:{a:1,b:0,s:0},lt:{d:1,en:1,q:1,src:'manual',ck:0,ckNow:0,ckOld:0,chg:-9},sram:false,dc:{x1:0,x0:1,m:0},ff:{d:1,m:0,q:0,mode:'ms',man:false,ck:0,ckNow:0,ckOld:0,chg:-9},st:{},mv:{v:0,manual:false,p:false},dope:'n',pn:0,pnw:50,gate:'nand',ins:0x2E,in3:false,ch:{draw:{},armed:false,on:false,res:{},last:''},prog:0,rate:1,sub:0,aluf:'add',base:'dec',cla:false,cmosTest:{on:false,p:[1,1],n:[0,0]},temp:300,pipe:false,wave:[],waveT:0};
+const S={a:5,b:3,path:[{id:'c'}],g:{a:1,b:1,cin:0},gl:{a:1,b:1,c:1},mx:{a:1,b:0,s:0},lt:{d:1,en:1,q:1,src:'manual',ck:0,ckNow:0,ckOld:0,chg:-9},sram:false,dc:{x1:0,x0:1,m:0},ff:{d:1,m:0,q:0,mode:'ms',man:false,ck:0,ckNow:0,ckOld:0,chg:-9},st:{},mv:{v:0,manual:false,p:false},dope:'n',pn:0,pnw:50,gate:'nand',ins:0x2E,in3:false,mm:{mode:'pc',sel:-1},ch:{draw:{},armed:false,on:false,res:{},last:''},prog:0,rate:1,sub:0,aluf:'add',base:'dec',cla:false,cmosTest:{on:false,p:[1,1],n:[0,0]},temp:300,pipe:false,wave:[],waveT:0};
 let uz=1,upx=0,upy=0,panT=0,kbdNav=false,queue=[],anim=null,zones=[],zFocus=-1,W=800,H=800,dpr=1,k=1,ox=0,oy=0,SA=1,last=0;
 
 /* ---------- lógica ---------- */
@@ -209,8 +210,7 @@ function addsub(a,b,sub){const be=sub?(~b&255):b,cy=[sub?1:0],s=[];for(let i=0;i
 function nand9(A,B,C){const N=(x,y)=>1-(x&y),n1=N(A,B),n2=N(A,n1),n3=N(B,n1),n4=N(n2,n3),n5=N(n4,C),n6=N(n4,n5),n7=N(C,n5);return {a:A,b:B,cin:C,n1,n2,n3,n4,n5,n6,n7,s:N(n6,n7),cout:N(n1,n5)};}
 function classic(A,B,C){const p=A^B,x1=p&C,x2=A&B;return {a:A,b:B,cin:C,p,x1,x2,s:p^C,cout:x1|x2};}
 function loadBit(){
-  S.sub=S.aluf==='sub'?1:0;
-  const r=addsub(S.a,S.b,S.sub);
+  const r=addsub(S.a,S.b,S.aluf==='sub'?1:0);
   S.g={a:S.a&1,b:r.be&1,cin:r.cy[0]};
   if(typeof SCN!=='undefined'&&SCN.alu&&SCN.alu.hots[1]){
     SCN.alu.hots[1].gate=ALUF[S.aluf].g||'and';
@@ -222,7 +222,7 @@ function loadBit(){
 const al=v=>{c.globalAlpha=Math.max(0,Math.min(1,SA*v));};
 function Ln(pts,col,w,dash,off){c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)c.lineTo(pts[i][0],pts[i][1]);c.strokeStyle=col;c.lineWidth=w||2;c.setLineDash(dash||[]);c.lineDashOffset=off||0;c.lineJoin='round';c.lineCap='round';c.stroke();c.setLineDash([]);}
 function Tx(s,x,y,size,col,align,font,maxw){const f=font||T.mono,al_=align||'center';let fs=size*T.fs;c.font=`${fs}px ${f}`;
-  const m=c.getTransform();if(BTr&&m.a===BTr.a&&m.d===BTr.d&&m.e===BTr.e&&m.f===BTr.f&&!m.b&&!m.c){const av=maxw||(al_==='center'?2*Math.min(x,800-x):al_==='right'?x:800-x)-4;if(av>0){const w=c.measureText(s).width;if(w>av){fs=Math.max(fs*.6,fs*av/w);c.font=`${fs}px ${f}`;}}}
+  const m=c.getTransform();if(!m.b&&!m.c&&(maxw||(BTr&&m.a===BTr.a&&m.d===BTr.d&&m.e===BTr.e&&m.f===BTr.f))){const av=maxw||(al_==='center'?2*Math.min(x,800-x):al_==='right'?x:800-x)-4;if(av>0){const w=c.measureText(s).width;if(w>av){fs=Math.max(fs*.6,fs*av/w);c.font=`${fs}px ${f}`;}}}
   c.fillStyle=col||T.ink;c.textAlign=al_;c.textBaseline='middle';c.fillText(s,x,y);}
 function Rc(x,y,w,h,col,lw,fill){if(fill){c.fillStyle=fill;c.fillRect(x,y,w,h);}if(col){c.strokeStyle=col;c.lineWidth=lw||2;c.strokeRect(x,y,w,h);}}
 function Ci(x,y,r,col,lw,fill){c.beginPath();c.arc(x,y,r,0,7);if(fill){c.fillStyle=fill;c.fill();}if(col){c.strokeStyle=col;c.lineWidth=lw||2;c.stroke();}}
@@ -265,7 +265,7 @@ function scene0(t){
 
 /* 1: processador */
 /* programas */
-const OPN={0:'NOP',1:'LDA',2:'ADD',3:'SUB',4:'STA',5:'LDI',6:'JMP',7:'JZ',15:'HLT'},PRG0=[0x1D,0x2E,0x4F,0xF0],MN0=['LDA 13','ADD 14','STA 15','HLT'];
+const OPN={0:'NOP',1:'LDA',2:'ADD',3:'SUB',4:'STA',5:'LDI',6:'JMP',7:'JZ',8:'CALL',9:'RET',15:'HLT'},PRG0=[0x1D,0x2E,0x4F,0xF0],MN0=['LDA 13','ADD 14','STA 15','HLT'];
 const PROGS=[
  {n:'c = a + b',code:[[1,13],[2,14],[4,15],[15,0]],names:{13:'a',14:'b',15:'c'}},
  {n:'if / else',code:[[1,13],[3,14],[7,5],[5,0],[6,6],[5,1],[4,15],[15,0]],names:{13:'a',14:'b',15:'c'},
@@ -274,10 +274,13 @@ const PROGS=[
  {n:'while',code:[[1,14],[7,9],[1,15],[2,13],[4,15],[1,14],[3,12],[4,14],[6,0],[15,0]],names:{12:'um',13:'a',14:'b',15:'c'},
   src:['c = 0;','while (b != 0) {','    c = c + a;','    b = b - 1;','}'],
   grp:[{s:[1],a:[0,1],t:'O teste do laço: carrega b e, se for zero, JZ sai do laço'},{s:[2],a:[2,3,4],t:'O corpo: c recebe c + a'},{s:[3],a:[5,6,7],t:'b recebe b − 1; a constante 1 fica guardada na memória'},{s:[4],a:[8],t:'A chave que fecha vira JMP: volta para o teste'},{s:[1],a:[9],t:'Quando b chega a zero, o programa sai do laço com c = a × b'}]},
+ {n:'função',code:[[1,13],[8,5],[2,14],[4,15],[15,0],[4,12],[2,12],[9,0]],names:{12:'t',13:'a',14:'b',15:'c'},
+  src:['int dobro(int x) {','    return x + x;','}','c = dobro(a) + b;'],
+  grp:[{s:[3],a:[0,1],t:'O argumento vai para A; CALL guarda a volta (2) e salta para 5'},{s:[0,1],a:[5,6],t:'Dentro da função, x + x vira STA t e ADD t'},{s:[2],a:[7],t:'RET tira o 2 da pilha e volta para lá'},{s:[3],a:[2,3,4],t:'De volta: soma b e guarda em c'}]},
  {n:'meu código',custom:1,code:[[1,13],[3,14],[7,5],[1,13],[6,6],[1,14],[4,15],[15,0]],names:{12:'um',13:'a',14:'b',15:'c'},
   raw:'LDA a\nSUB b\nJZ 5\nLDA a\nJMP 6\nLDA b\nSTA c\nHLT'}
 ];
-const INV_OP={NOP:0,LDA:1,ADD:2,SUB:3,STA:4,LDI:5,JMP:6,JZ:7,HLT:15};
+const INV_OP={NOP:0,LDA:1,ADD:2,SUB:3,STA:4,LDI:5,JMP:6,JZ:7,CALL:8,RET:9,HLT:15};
 const SYM_AD={um:12,a:13,b:14,c:15};
 function parseAsm(txt){
   const ls=txt.split(/\r?\n/).map(l=>l.replace(/;.*$/,'').trim()).filter(Boolean);
@@ -288,10 +291,10 @@ function parseAsm(txt){
     const tk=ls[i].split(/[\s,]+/);const mn=tk[0].toUpperCase();
     if(!(mn in INV_OP))return {err:`Linha ${i+1}: instrução "${tk[0]}" desconhecida.`};
     const op=INV_OP[mn];
-    if(op===0||op===15){out.push([op,0]);continue;}
+    if(op===0||op===9||op===15){out.push([op,0]);continue;}
     if(tk.length<2)return {err:`Linha ${i+1}: "${mn}" exige um operando.`};
     const rawOp=tk[1].toLowerCase();
-    if(rawOp in SYM_AD&&(op===5||op===6||op===7))return {err:`Linha ${i+1}: ${mn} usa um número de 0 a 15${op===5?'':' (o endereço de uma instrução)'}, não o nome de uma variável.`};
+    if(rawOp in SYM_AD&&(op===5||op===6||op===7||op===8))return {err:`Linha ${i+1}: ${mn} usa um número de 0 a 15${op===5?'':' (o endereço de uma instrução)'}, não o nome de uma variável.`};
     const val=rawOp in SYM_AD?SYM_AD[rawOp]:/^\d+$/.test(rawOp)?parseInt(rawOp,10):NaN;
     if(Number.isNaN(val)||val<0||val>15)return {err:`Linha ${i+1}: operando "${tk[1]}" deve ser 0..15 ou a, b, c, um.`};
     out.push([op,val]);
@@ -299,19 +302,19 @@ function parseAsm(txt){
   return {code:out};
 }
 const prog=()=>PROGS[S.prog]||PROGS[0];
-function dis(by,nm){const o=by>>4,n=by&15,m=OPN[o]||'???';return o===0||o===15?m:`${m} ${o!==5&&o<6&&nm&&nm[n]?nm[n]:n}`;}
-function initMem(){const p=prog(),m={12:1,13:S.a,14:S.b,15:0};return n=>n<p.code.length?(p.code[n][0]<<4|p.code[n][1]):(m[n]||0);}
+function dis(by,nm){const o=by>>4,n=by&15,m=OPN[o]||'???';return o===0||o===9||o===15?m:`${m} ${o!==5&&o<6&&nm&&nm[n]?nm[n]:n}`;}
+function initMem(){const p=prog(),m={12:p.names[12]==='t'?0:1,13:S.a,14:S.b,15:0};return n=>n<p.code.length?(p.code[n][0]<<4|p.code[n][1]):(m[n]||0);}
 let CY={},PIT=60,GAPY=418;
-function layoutMem(){const p=prog(),rows=[...p.code.keys(),-1,...Object.keys(p.names).map(Number)];PIT=Math.min(60,478/(rows.length-.4));CY={};let y=150+PIT/2;rows.forEach(r=>{if(r<0){GAPY=y-PIT*.2;y+=PIT*.6;}else{CY[r]=y;y+=PIT;}});}
-const pcY=n=>n<prog().code.length?CY[n]:GAPY;
+function layoutMem(){GAPY=-1;const p=prog(),rows=[...p.code.keys(),...(p.code.length<12?[-1]:[]),...Object.keys(p.names).map(Number)];PIT=Math.min(60,478/(rows.length-.4));CY={};let y=150+PIT/2;rows.forEach(r=>{if(r<0){GAPY=y-PIT*.2;y+=PIT*.6;}else{CY[r]=y;y+=PIT;}});}
+const gapY=()=>GAPY>0?GAPY:CY[prog().code.length-1]+PIT/2,pcY=n=>n<prog().code.length?CY[n]:CY[n]!==undefined?CY[n]:gapY();
 let segKey='',segVal=null;
 function cpuSegs(){
   const key=S.prog+'|'+S.a+'|'+S.b+'|'+S.base;if(key===segKey)return segVal;
   const p=prog(),nm=p.names,mem0=initMem(),M={},rd=n=>n in M?M[n]:mem0(n),lab=n=>nm[n]||('o endereço '+n);
-  const cyOf=n=>CY[n]!==undefined?CY[n]:GAPY;
+  const cyOf=n=>CY[n]!==undefined?CY[n]:gapY();
   const fe=i=>[[310,cyOf(i)],[370,cyOf(i)],[370,182],[450,182]],toA=n=>[[310,cyOf(n)],[370,cyOf(n)],[370,427],[450,427]],toALU=n=>[[310,cyOf(n)],[370,cyOf(n)],[370,500],[675,500],[675,540]],
     riA=[[450,182],[370,182],[370,427],[450,427]],riPC=[[450,182],[370,182],[370,650],[160,650],[160,680]],aM=n=>[[450,427],[370,427],[370,cyOf(n)],[310,cyOf(n)]],aluA=[[600,680],[600,730],[770,730],[770,427],[610,427]];
-  const sg=[{d:.9,ph:-1,txt:'O PC aponta para o endereço 0: o programa vai começar'}];let pc=0,A=0,n=0,end=false;
+  const sg=[{d:.9,ph:-1,txt:'O PC aponta para o endereço 0: o programa vai começar'}];let pc=0,A=0,n=0,end=false;const stk=[],SX=i=>281+i*40;
   while(n++<70&&!end&&pc<p.code.length){
     const i=pc,by=rd(i)&255,op=by>>4,x=by&15,E=o=>sg.push(Object.assign({ph:2},o));
     sg.push({d:1.7,ph:0,p:[fe(i)],v:[''],cell:i,hl:'ri pc',txt:`A memória entrega ao RI a instrução do endereço ${i}; o PC avança`,set:{ir:by,dec:-1},pc:i+1});
@@ -323,12 +326,15 @@ function cpuSegs(){
     else if(op===5){A=x;E({d:1.6,p:[riA],v:[x],hl:'ri a',txt:`A constante ${fmt8(x)} vem da própria instrução para o acumulador`,set:{A}});}
     else if(op===6){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}
     else if(op===7){const z=A===0;E({d:1.6,hl:'a uc',zf:1,txt:`O acumulador vale ${fmt8(A)} (Z = ${z?1:0}). É zero? ${z?'Sim: JZ vai desviar':'Não: segue para a próxima instrução'}`});if(z){pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`Desvio: o PC recebe ${x} e a próxima instrução será buscada lá`,pc:x});}}
+    else if(op===0)E({d:1.4,hl:'uc',txt:'NOP: não há nada a executar; o ciclo serviu só para buscar e decodificar'});
+    else if(op===8){if(stk.length>=4){end=true;E({d:2.8,hl:'stk uc',txt:'Pilha cheia: com 4 níveis, não cabe mais um endereço de volta'});}else{E({d:1.9,p:[[[230,710],[SX(stk.length),710]]],v:[pc],hl:'pc stk',sk:1,txt:`CALL: o endereço de volta, ${pc}, vai para a pilha`,set:{stk:stk.concat([pc])}});stk.push(pc);pc=x;E({d:1.9,p:[riPC],v:[x],hl:'ri pc',txt:`O PC recebe ${x}, o endereço da função`,pc:x});}}
+    else if(op===9){if(!stk.length){end=true;E({d:2.8,hl:'stk uc',txt:'RET com a pilha vazia: não há para onde voltar'});}else{const r=stk.pop();E({d:1.9,p:[[[SX(stk.length),710],[230,710]]],v:[r],hl:'pc stk',sk:-1,txt:`RET: o PC recebe ${r}, tirado do topo da pilha`,set:{stk:stk.slice()},pc:r});pc=r;}}
     else if(op===15){end=true;E({d:2.8,hl:'uc',txt:`HLT: o programa termina com c = ${fmt8(rd(15))}`});}
   }
   if(!end)sg.push({d:2.6,ph:2,txt:pc>=p.code.length?'O programa acabou sem HLT: o PC passou da última instrução':'A demonstração para aqui: o laço ainda teria muitas voltas'});
   segKey=key;segVal=sg;return sg;
 }
-const DUR={datapath:()=>uops().map(x=>x.ph===1?1.5:x.t==='parar'||x.t==='...'?2.8:2.3),cpu:()=>cpuSegs().map(x=>x.d),fab:()=>FAB.map(()=>2.8),c:()=>prog().grp?prog().grp.map(()=>3).concat([3.5]):prog().custom?prog().code.map(()=>1.6):[2.6,2.4,2.6,3,3.4],alu:()=>(S.aluf==='add'||S.aluf==='sub')&&!S.cla?[1.4,.5,.5,.5,.5,.5,.5,.5,.5,4.6]:[1.4,1.0,7.6],mem:()=>Object.keys(CY).flatMap(()=>[.95,.95]),reg:()=>[2,.6,1.9,2,.6,1.9],ff:()=>[1.6,1.6],dec:()=>[1.6,1.6,1.6,1.6],uc:()=>Array(9).fill(1.4),pc:()=>Array(16).fill(2.4)};
+const DUR={mapa:()=>Array(9).fill(2.6),datapath:()=>uops().map(x=>x.ph===1?1.5:x.t==='parar'||x.t==='...'?2.8:2.3),cpu:()=>cpuSegs().map(x=>x.d),fab:()=>FAB.map(()=>2.8),c:()=>prog().grp?prog().grp.map(()=>3).concat([3.5]):prog().custom?prog().code.map(()=>1.6):[2.6,2.4,2.6,3,3.4],alu:()=>(S.aluf==='add'||S.aluf==='sub')&&!S.cla?[1.4,.5,.5,.5,.5,.5,.5,.5,.5,4.6]:[1.4,1.0,7.6],mem:()=>Object.keys(CY).flatMap(()=>[.95,.95]),reg:()=>[2,.6,1.9,2,.6,1.9],ff:()=>[1.6,1.6],dec:()=>[1.6,1.6,1.6,1.6],uc:()=>Array(9).fill(1.4),pc:()=>Array(16).fill(2.4)};
 const clk=id=>S.st[id]||(S.st[id]={t:0,run:true,until:0});
 function stepNow(id){const st=clk(id),d=DUR[id](),tot=d.reduce((q,x)=>q+x,0),base=Math.floor(st.t/tot)*tot,t=st.t-base;let acc=0,set=0;for(const x of d){acc+=x;if(t<acc-1e-4){st.until=base+acc+.002;set=1;break;}}if(!set)st.until=base+tot+d[0]+.002;st.run=true;}
 function stepPrev(id){
@@ -351,7 +357,7 @@ function sceneCustomAsm(t){
     Tx(dis(by,p.names),140,y,24,on?T.hot:T.ink,'left');
     Tx(bin(q[0],4)+' '+bin(q[1],4),590,y,21,on?T.hot:T.mute,'center');
   });
-  Tx('Toque no bloco ao lado ou clique em + para executar na CPU',400,685,20,T.ink,'center',T.text);
+  Tx('Toque no bloco acima ou clique em + para executar na CPU',400,685,20,T.ink,'center',T.text);
   Tx(`a = ${fmt8(S.a)}      b = ${fmt8(S.b)}      (clique em "editar código" para alterar)`,400,730,19,T.mute);
 }
 function sceneFlow(t){
@@ -360,17 +366,19 @@ function sceneFlow(t){
   p.src.forEach((q,i)=>Tx(q,40,ly(i),26,g&&g.s.includes(i)?T.hot:T.ink,'left'));
   let k=0;p.code.forEach((q,i)=>{const by=q[0]<<4|q[1],go=G.findIndex(z=>z.a.includes(i)),on=go===gi,y=ay(i),a=go<gi||gi>=G.length?1:on?(clk('c').run?sstep(0,.3,f):1):0;
     Tx(String(i),470,y,19,T.mute,'right');al(a);Tx(dis(by,p.names),486,y,24,on?T.hot:T.ink,'left');Tx(bin(q[0],4)+' '+bin(q[1],4),652,y,19,on?T.hot:T.mute,'left');
-    if(q[0]===6||q[0]===7){const x=438-k*17,yt=ay(q[1]),col=on?T.hot:T.mute;k++;Ln([[450,y],[x,y],[x,yt],[448,yt]],col,on?3:2,q[0]===7?[6,5]:null);Ln([[440,yt-6],[449,yt],[440,yt+6]],col,on?3:2);}
+    const ci=p.code.findIndex(z=>z[0]===8),tg=q[0]===9?(ci>=0?ci+1:-1):q[1];
+    if((q[0]>=6&&q[0]<=8)||(q[0]===9&&tg>=0)){const x=438-k*17,yt=ay(tg),col=on?T.hot:T.mute;k++;Ln([[450,y],[x,y],[x,yt],[448,yt]],col,on?3:2,q[0]===7?[6,5]:q[0]===9?[2,4]:null);Ln([[440,yt-6],[449,yt],[440,yt+6]],col,on?3:2);}
     al(1);});
   Tx(g?g.t:'Pronto para a memória: cada desvio é só um endereço no operando',400,668,21,T.ink,'center',T.text);
-  Tx('tracejado: salta só se o acumulador for zero (JZ)      contínuo: salta sempre (JMP)',400,708,16,T.mute,'center',T.text);
+  Tx(p.code.some(z=>z[0]===8)?'contínuo: CALL salta e guarda a volta      pontilhado: RET volta':'tracejado: salta só se o acumulador for zero (JZ)      contínuo: salta sempre (JMP)',400,708,16,T.mute,'center',T.text);
   Tx(`a = ${fmt8(S.a)}      b = ${fmt8(S.b)}`,400,750,22,T.mute);
 }
 
 function scene1(tc){
   const a=S.a,b=S.b,sg=cpuSegs(),tot=sg.reduce((q,x)=>q+x.d,0),t=tc%tot;
-  const P_=prog(),NM=P_.names,mem0=initMem(),st={pc:0,ir:-1,dec:-1,A:0,m:{}};let acc=0,act=null,af=0,pcy=CY[0],execIdx=0;
+  const P_=prog(),NM=P_.names,mem0=initMem(),st={pc:0,ir:-1,dec:-1,A:0,m:{},stk:[]};let acc=0,act=null,af=0,pcy=CY[0],execIdx=0,ex0=false;
   for(const x of sg){
+    if(t>=acc&&x.ph===2)ex0=true;
     if(t>=acc+x.d){if(x.ph===0&&x.cell!==undefined)execIdx=x.cell;if(x.set)Object.assign(st,x.set);if(x.pc!==undefined){st.pc=x.pc;pcy=pcY(x.pc);}}
     else if(t>=acc&&!act){if(x.ph===0&&x.cell!==undefined)execIdx=x.cell;act=x;af=(t-acc)/x.d;if(x.pc!==undefined)pcy=pcY(st.pc)+(pcY(x.pc)-pcY(st.pc))*sstep(.7,1,af);}
     acc+=x.d;}
@@ -382,29 +390,38 @@ function scene1(tc){
       noGlow(()=>Tx(`${i+1}  ${n}`,x,50,22,on?T.bg:T.mute,'center',T.mono));if(i<2)Tx('→',x+115,50,22,T.mute);});
     Tx(actTxt,400,100,23,T.ink,'center',T.text);
   }else{
-    const br=!!(act&&act.pc!==undefined&&ph===2);
-    const stg=[
+    const br=!!(act&&act.pc!==undefined&&ph===2),opAt=i=>((i in st.m?st.m[i]:mem0(i))&255)>>4,hl=opAt(execIdx)===15,fill=!ex0&&ph>=0,nx=i=>!br&&!hl&&i<P_.code.length?i:-1;
+    const stg=fill?[
+      ['3. executa',-1,false],
+      ['2. decodifica',ph===1?execIdx:-1,ph===1],
+      ['1. busca',execIdx+(ph===1?1:0)<P_.code.length?execIdx+(ph===1?1:0):-1,true]
+    ]:[
       ['3. executa',execIdx,ph>=0],
-      ['2. decodifica',!br&&execIdx+1<P_.code.length?execIdx+1:-1,ph>=0],
-      ['1. busca',!br&&execIdx+2<P_.code.length?execIdx+2:-1,ph>=0]
+      ['2. decodifica',nx(execIdx+1),ph>=0],
+      ['1. busca',nx(execIdx+2),ph>=0]
     ];
     stg.forEach(([lb,idx,on],i)=>{
-      if(!on)idx=-1;const x=170+i*230,insTxt=!on?'—':idx>=0?dis((idx in st.m?st.m[idx]:mem0(idx))&255,NM):(br?'flush (bolha)':'fim (NOP)');
+      if(!on)idx=-1;const x=170+i*230,insTxt=!on?'—':idx>=0?dis((idx in st.m?st.m[idx]:mem0(idx))&255,NM):(br?'flush (bolha)':hl?'descartada (HLT)':'fim (NOP)');
       Rc(x-104,22,208,52,idx>=0?(i===0?T.hot:T.ink):T.dim,i===0&&idx>=0?2.5:1.4,T.bg);
       Tx(lb,x,37,15,i===0&&idx>=0?T.hot:T.mute,'center',T.mono);
       Tx(insTxt,x,58,18,idx>=0?(i===0?T.hot:T.ink):(br?T.hot:T.dim),'center',T.mono);
     });
-    Tx(br?'Desvio tomado! O pipeline descarta (flush) as 2 instruções buscadas à frente e recarrega o PC':ph<0?'Pipeline de 3 estágios: ainda vazio, a primeira busca vai começar':'Pipeline de 3 estágios: 3 instruções sobrepostas no tempo (throughput ideal = 1 instrução/ciclo)',400,100,19,br?T.hot:T.ink,'center',T.text);
+    Tx(br?'Desvio tomado! O pipeline descarta (flush) as 2 instruções buscadas à frente e recarrega o PC':ph<0?'Pipeline de 3 estágios: ainda vazio, a primeira busca vai começar':fill?'Pipeline enchendo: a cada ciclo entra uma instrução, até os 3 estágios ficarem ocupados':hl?'HLT: o processador para e descarta o que já tinha buscado à frente':'Pipeline de 3 estágios: 3 instruções sobrepostas no tempo (throughput ideal = 1 instrução/ciclo)',400,100,19,br?T.hot:T.ink,'center',T.text);
   }
   c.save();c.translate(0,30);
   [[[370,Math.min(182,CY[0])],[370,CY[15]]],[[370,CY[15]],[370,650],[160,650],[160,680]],[[370,182],[450,182]],[[370,427],[450,427]],[[525,460],[525,540]],[[370,500],[675,500],[675,540]],[[600,680],[600,730],[770,730],[770,427],[610,427]],[[680,215],[680,265]]].forEach(p=>Ln(p,T.dim,2));
   for(const i in CY)Ln([[310,CY[i]],[370,CY[i]]],T.dim,2);
-  Tx('memória',200,124,22,T.ink,'center',T.text);Tx('⋮',200,GAPY,22,T.mute);const fz=Math.max(16,24*PIT/60),hh=PIT-4;
+  Tx('memória',200,124,22,T.ink,'center',T.text);if(GAPY>0)Tx('⋮',200,GAPY,22,T.mute);const fz=Math.max(16,24*PIT/60),hh=PIT-4;
   for(const i in CY){const y=CY[i],n=+i,nm=NM[n],cd=n<P_.code.length,v=st.m[n]!==undefined?st.m[n]:mem0(n),on=act&&act.cell===n;
     Rc(90,y-hh/2,220,hh,on?T.hot:T.ink,on?3.5:1.5);Tx(cd?bin(v>>4,4)+' '+bin(v&15,4):bin(v),200,y+1,fz,T.ink);
     Tx(nm||String(n),74,y,Math.max(15,22*PIT/60),nm?T.ink:T.mute,'right',nm?T.text:T.mono);if(nm)Tx(fmt8(v),322,y-PIT*.26,Math.max(13,18*PIT/60),T.mute,'left');}
   Ln([[90,710],[37,710],[37,pcy+13]],T.dim,2);c.beginPath();c.moveTo(28,pcy-11);c.lineTo(46,pcy);c.lineTo(28,pcy+11);c.closePath();c.fillStyle=T.hot;c.fill();
-  bx('pc',90,680,140,60);Tx(bin(st.pc,4),160,711,26);Tx('contador de programa',246,711,21,T.ink,'left',T.text);Tx('PC',222,694,14,T.mute,'right');
+  bx('pc',90,680,140,60);Tx(bin(st.pc,4),160,711,26);Tx('PC',222,694,14,T.mute,'right');
+  if(P_.code.some(z=>z[0]===8||z[0]===9)){Tx('pilha de retorno',262,666,14,H('stk')?T.hot:T.mute,'left',T.text);Ln([[230,710],[262,710]],H('stk')?T.hot:T.dim,2);
+    const skh=act&&act.sk,hi=skh>0?st.stk.length:skh<0?st.stk.length-1:-1;
+    for(let i=0;i<4;i++){const x=262+i*40,v=st.stk[i];Rc(x,688,38,44,i===hi?T.hot:v!==undefined?T.ink:T.dim,i===hi?2.6:1.4,T.bg);if(v!==undefined)Tx(bin(v,4),x+19,711,14,T.ink,'center',T.mono,34);}
+    Tx(st.stk.length?'↑ topo':'pilha vazia',st.stk.length?262+(st.stk.length-1)*40+19:342,748,11,T.mute,'center',T.text);}
+  else Tx('contador de programa',246,711,21,T.ink,'left',T.text,250);
   bx('ri',450,150,250,65);Tx('registrador de instrução',452,126,21,T.ink,'left',T.text);Tx('RI',692,164,14,T.mute,'right');if(st.ir>=0)Tx(bin(st.ir>>4,4)+' '+bin(st.ir&15,4),575,183,26);
   bx('uc',450,265,250,65);Tx('unidade de controle',452,241,21,T.ink,'left',T.text);Tx('UC',692,279,14,T.mute,'right');if(st.dec>=0)Tx(dis(st.dec,NM),575,298,28,T.hot);
   bx('a',450,395,160,65);Tx('acumulador',452,371,21,T.ink,'left',T.text);Tx('A',602,409,14,T.mute,'right');Tx(bin(st.A),524,430,24);Tx('= '+fmt8(st.A),626,410,20,T.mute,'left');
@@ -413,7 +430,7 @@ function scene1(tc){
   Ln([[682,440],[732,440],[732,298],[700,298]],zfOn?T.hot:T.dim,zfOn?2.5:1.5,[5,4],zfOn?-tc*30:0);
   noGlow(()=>{Ln([[436,368],[794,368],[794,694],[436,694],[436,368]],T.dim,1.5,[7,6]);Tx('caminho de dados',792,712,16,T.mute,'right',T.text);});
   const fl=act&&act.fl?(typeof act.fl==='function'?act.fl():act.fl):null,ha=H('alu');c.beginPath();[[470,540],[580,540],[600,570],[620,540],[730,540],[680,680],[520,680]].forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();
-  c.fillStyle=T.bg;c.fill();c.strokeStyle=ha?T.hot:T.ink;c.lineWidth=ha?3.5:1.5;c.stroke();Tx(fl||'ALU',600,628,fl?30:28,fl?T.hot:T.ink,'center',fl?T.mono:T.text);
+  c.fillStyle=T.bg;c.fill();c.strokeStyle=ha?T.hot:T.ink;c.lineWidth=ha?3.5:1.5;c.stroke();Tx(fl||'ALU',600,628,fl?30:28,fl?T.hot:T.ink,'center',fl?T.mono:T.text,180);
   if(act&&act.p)act.p.forEach((p,i)=>{const e=sstep(0,act.pc!==undefined?.7:1,af),[x,y]=along(p,e);for(let j=4;j>=1;j--){const q=along(p,e-j*.025);al(.14*(5-j)/4);Ci(q[0],q[1],9,null,0,T.hot);}al(1);Ci(x,y,10,null,0,T.hot);if(act.v[i]!=='')Tx(fmt8(act.v[i]),x+16,y-20,20,T.hot,'left');});
   c.restore();
 }
@@ -429,7 +446,7 @@ function scene2(t){
   const sg=S.base==='sig',sv=x=>sg&&x>127?x-256:x,done=ar?(cla?t>2.39:t>5.39):t>2.2,raw=f==='add'?sv(a)+sv(b):f==='sub'?sv(a)-sv(b):0,ov=raw<(sg?-128:0)||raw>(sg?127:255),fr=x=>S.base==='hex'?(x<0?'−':'')+'0x'+Math.abs(x).toString(16).toUpperCase():String(x);
   Tx(one?`¬${fmt8(a)} = ${done?fmt8(r.s):'…'}`:`${fmt8(a)} ${F.sy} ${fmt8(b)} = ${done?fmt8(r.s):'…'}`,400,52,40,T.ink,'center',T.text);
   Tx(ar?`Unidade Aritmética ativa (${F.n}${cla?' · Vai-um Antecipado CLA':' · Vai-um em Cascata'})`:`Unidade Lógica ativa (${F.n}): sem vai-um, cada bit é calculado em paralelo`,400,88,18,T.hot,'center',T.text);
-  Tx(ar?(cla?'o CLA calcula todos os vai-uns em paralelo, com G = A·B e P = A⊕B':(sub?('A − B  =  A + ¬B + 1'+(done&&ov?(sg?`      o resultado real, ${raw}, não cabe em 8 bits com sinal`:`      em 8 bits, ${fmt8(r.s)} representa ${fr(raw)}`):'')):(done&&ov?`o resultado real, ${fr(raw)}, não cabe em 8 bits${sg?' com sinal':''}`:'o vai-um propaga em série do bit 0 ao bit 7'))):'cada fatia tem parte aritmética (Σ) e lógica (portas); o seletor escolhe a saída',400,114,16,T.mute,'center',T.text);
+  Tx(ar?(cla&&!(done&&ov)?(sub?'o CLA calcula os vai-uns em paralelo, com G = A·B′ e P = A⊕B′, onde B′ = ¬B':'o CLA calcula todos os vai-uns em paralelo, com G = A·B e P = A⊕B'):(sub?('A − B  =  A + ¬B + 1'+(done&&ov?(sg?`      o resultado real, ${raw}, não cabe em 8 bits com sinal`:`      em 8 bits, ${fmt8(r.s)} representa ${fr(raw)}`):'')):(done&&ov?`o resultado real, ${fr(raw)}, não cabe em 8 bits${sg?' com sinal':''}`:'o vai-um propaga em série do bit 0 ao bit 7'))):'cada fatia tem parte aritmética (Σ) e lógica (portas); o seletor escolhe a saída',400,114,16,T.mute,'center',T.text);
 
   Tx('A',30,156,21,T.mute,'center',T.text);if(!one)Tx('B',30,210,21,T.mute,'center',T.text);
   if(ar)Tx('B⊕SUB',30,266,13,T.mute,'center',T.text);
@@ -681,7 +698,7 @@ function scene5(t,live){
   const k=S.gate,comp=!CMOSG[k],gk=comp?'nand':k,st=CMOSG[gk],A=S.gl.a,B=GT[gk].two?S.gl.b:S.gl.a,VD=120,GD=640,tm=S.cmosTest.on;
   const nt=st.length>1?6:gk==='not'?2:4;
   Tx(tm&&comp?`defeito na NAND de base   ·   4 transistores`:`${GT[gk].n} em CMOS   ·   ${nt} transistores${tm?' (modo defeito)':''}`,400,46,28,tm?T.hot:T.ink,'center',T.mono);
-  if(tm)Tx('toque num transistor para forçar condução ou corte',400,84,17,T.hot,'center',T.text);
+  if(tm)Tx(st.length>1?`toque num transistor da ${GT[st[0]].n}; o inversor só segue a saída dela`:'toque num transistor para forçar condução ou corte',400,84,17,T.hot,'center',T.text);
   else if(comp)Tx(`o ${GT[k].n} não tem estágio CMOS simples: é montado com ${GT[k].eq.length} portas NAND como esta`,400,84,17,T.mute,'center',T.text);
   else if(st.length>1)Tx(`o ${GT[k].n} exige dois estágios em CMOS: uma porta ${GT[st[0]].n} seguida de um inversor (NOT)`,400,84,17,T.mute,'center',T.text);
   Ln([[50,VD],[700,VD]],T.ink,2.4);Tx('VDD  5 V',712,VD,15,T.ink,'left',T.text);
@@ -758,7 +775,7 @@ function sceneLay(t,live){
       ps=out?[[[500,155],[500,300],[602,300],[602,422],[700,422]]]:[[[700,422],[602,422],[602,520],[500,520],[500,665]]];
     }
     Tx('VDD',160,156,20,T.ink,'center',T.text);Tx('GND',160,666,20,T.ink,'center',T.text);
-    [['metal',Y.metal],['polissilício',Y.poly],['difusão N',Y.nd],['difusão P',Y.pd]].forEach(([n,col],i)=>{const x=36+i*192;F(x,729,26,18,col,1,1);Tx(n,x+34,739,18,T.mute,'left',T.text);});
+    [['metal',Y.metal],['polissilício',Y.poly],['difusão N',Y.nd],['difusão P',Y.pd]].forEach(([n,col],i)=>{const x=36+i*192;F(x,729,26,18,col,1,1);Tx(n,x+34,739,18,T.mute,'left',T.text,150);});
   });
 
   ps.filter(Boolean).forEach(p=>{for(let i=0;i<5;i++){const q=along(p,(t*.3+i/5)%1);Ci(q[0],q[1],6,T.bg,1.5,T.hot);}});
@@ -843,7 +860,7 @@ function sceneMos(t){
 function scenePN(t){
   const b=Math.max(0,Math.min(2,S.pn|0)),T_=S.temp,cold=T_<50,hot=T_>=420,fw=b===1&&!cold,vib=T_/300;
   const targetW=[50,16,100][b]*(hot?.8:cold?1.15:1);S.pnw+=(targetW-S.pnw)*.08;const w=S.pnw;
-  const head=cold?`0 K (${T_} K): portadores congelados; mesmo em polarização direta quase nada conduz`
+  const head=cold?`${T_===0?'0 K (zero absoluto)':T_+' K (perto do zero absoluto)'}: portadores congelados; mesmo em polarização direta quase nada conduz`
     :hot&&b===2?`polarização reversa (${T_} K): calor gera pares e causa corrente de fuga térmica!`
     :[`equilíbrio (${T_} K): a barreira segura os portadores`,`polarização direta (${T_} K): a barreira cai e a corrente passa`,`polarização reversa (${T_} K): a barreira cresce e nada passa`][b];
   Tx(head,400,90,23,fw||hot?T.hot:T.ink,'center',T.text);
@@ -877,7 +894,7 @@ function scenePN(t){
 /* cristal */
 function sceneSi(t){
   const q=S.dope,T_=S.temp,P=i=>140+130*i,E=(x,y,r)=>Ci(x,y,r,null,0,T.hot),Hh=(x,y,r)=>Ci(x,y,r,T.hot,2.5,T.bg),vib=T_/300;
-  const subT=T_<50?'0 K (zero absoluto): sem energia térmica, até o dopante congela e o cristal isola'
+  const subT=T_<50?`${T_===0?'0 K (zero absoluto)':T_+' K (perto do zero absoluto)'}: quase sem energia térmica,`+' até o dopante congela e o cristal isola'
     :T_>=550?`${T_} K: os pares gerados pelo calor superam os do dopante e a dopagem perde o controle`
     :T_>=420?`${T_} K: acima da faixa de operação dos chips (cerca de 400 K); a geração térmica cresce`
     :{si:`silício puro (${T_} K): o calor solta poucos elétrons`,n:`tipo N (${T_} K): o fósforo traz um elétron a mais`,p:`tipo P (${T_} K): o boro deixa uma lacuna`}[q];
@@ -904,7 +921,7 @@ function sceneAtom(t){
 /* fabricação */
 const FAB=[['wafer','Um disco de silício tipo P, fatiado de um cristal único.'],['oxidação','No forno, uma camada fina de SiO₂ cresce na superfície.'],['polissilício','Uma camada de silício policristalino é depositada. Ela será a porta.'],['fotolitografia','A luz ultravioleta atravessa a máscara e sensibiliza a resina exposta.'],['corrosão','Tudo o que não ficou protegido é removido. Sobra a porta.'],['dopagem','Íons de fósforo são implantados. A própria porta serve de máscara.'],['metalização','Contatos de metal ligam fonte, porta e dreno ao resto do circuito.'],['transistor pronto','Milhões destes são feitos ao mesmo tempo, lado a lado, no mesmo chip.']];
 function sceneFab(t){
-  const tt=t%(FAB.length*2.8),i=Math.floor(tt/2.8),f0=(tt/2.8)%1,f=!clk('fab').run&&f0<.1?.85:f0,g=sstep(.1,.8,f),done=n=>i>n?1:i===n?g:0;
+  const tt=t%(FAB.length*2.8),i=Math.floor(tt/2.8),f0=(tt/2.8)%1,f=!clk('fab').run&&f0<.02?.85:f0,g=sstep(.1,.8,f),done=n=>i>n?1:i===n?g:0;
   Tx(`${i+1} / ${FAB.length}   ${FAB[i][0]}`,400,66,32,T.ink,'center',T.text);Tx(FAB[i][1],400,108,21,T.mute,'center',T.text);
   c.save();c.translate(10,290);c.scale(1.5,1.5);
   const o=done(1),po=done(2),rs=i===3?sstep(0,.25,f):0,ra=i===3?1:i===4?1-sstep(.6,1,f):0,side=1-done(4),im=done(5),mt=done(6);
@@ -924,10 +941,11 @@ function sceneFab(t){
 
 /* memória */
 function sceneMem(t){
+  Tx('como um programa C usa a memória',635,772,15,T.ink,'center',T.text);
   const p=prog(),val=initMem(),ads=Object.keys(CY).map(Number),per=1.9,ad=ads[Math.floor(t/per)%ads.length],f=(t%per)/per,out=f>.5,h=Math.min(44,PIT-6),bot=CY[15]+h/2;
   Tx('endereço',120,84,20,T.mute,'center',T.text);Tx(bin(ad,4),120,116,30,T.hot);Ln([[120,134],[120,150]],T.hot,3);
   Rc(60,150,120,476,T.ink,1.5);c.save();c.translate(88,388);c.rotate(-Math.PI/2);Tx('decodificador',0,0,20,T.mute,'center',T.text);c.restore();
-  Tx('⋮',464,GAPY,22,T.mute);
+  if(GAPY>0)Tx('⋮',464,GAPY,22,T.mute);
   for(const n of ads){const y=CY[n],on=n===ad,v=val(n),nm=p.names[n];
     Tx(String(n),168,y,Math.min(20,h*.7),on?T.hot:T.mute,'right');Ln([[180,y],[236,y]],on?T.hot:T.dim,on?3.5:2);
     for(let j=0;j<8;j++){const x=240+j*58,b=v>>(7-j)&1;Rc(x,y-h/2,50,h,on?T.hot:T.ink,on?2.6:1.2);Tx(String(b),x+25,y+1,Math.min(22,h*.62),b?(on?T.hot:T.ink):T.mute);}
@@ -974,7 +992,7 @@ function sceneFF(t,live){
   const f=S.ff,now=performance.now()/1000,man=f.man||S.ch.on,ck=ffClock(t),ed=edgeStep(f,ck,now),pul=f.mode==='pulso';
   if(pul){if(ed.en)f.q=f.d;f.m=f.q;}else{if(!ck)f.m=f.d;else f.q=f.m;}
   const w=(p,v)=>Ln(p,v?T.hot:T.dim,v?3:2);
-  const wt=now;if((clk('ff').run||(f.man&&S.ch.on))&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(pul?[ck,ed.en,f.q]:[ck,f.m,f.q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=now;if((clk('ff').run||S.ch.on)&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(pul?[ck,ed.en,f.q]:[ck,f.m,f.q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Q = ${f.q}`,400,96,44,T.ink,'center',T.text);
   Tx(pul?'detector de borda: o latch abre só durante um pulso curto após a subida do relógio':'sem detector: na subida, o mestre fecha e o escravo abre no mesmo instante',400,140,18,T.mute,'center',T.text);
   if(!pul){
@@ -1009,7 +1027,7 @@ const DL={sc:1.3,ox:10,oy:200,gates:[['nand',200,120,1],['nand',200,240,2],['nan
  dots:[['en',120,267],['n1',270,138],['q',480,147],['qb',500,249]],ins:[['d',32,129,'D'],['en',32,267,'EN']],outs:[['q',574,147,'Q'],['qb',574,249,'¬Q']]};
 function sceneSram6T(t,live){
   const l=S.lt;if(l.en)l.q=l.d;const q=l.q,qb=1-q,wl=l.en;
-  const wt=performance.now()/1000;if(clk('latch').run&&wt-S.waveT>.05){S.waveT=wt;S.wave.push([wl,l.d,q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=performance.now()/1000;if((clk('latch').run||S.ch.on)&&wt-S.waveT>.05){S.waveT=wt;S.wave.push([wl,l.d,q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Célula SRAM 6T   ·   Q = ${q}   (6 transistores em vez de 16)`,400,84,28,T.ink,'center',T.text);
   Tx(wl?'Wordline (WL) = 1: transistores de acesso M5 e M6 abrem passagem às Bitlines':'Wordline (WL) = 0: célula isolada; dois inversores cruzados (4T) seguram o bit',400,122,19,wl?T.hot:T.mute,'center',T.text);
 
@@ -1060,7 +1078,7 @@ function sceneLatch(t,live){
   const l=S.lt,bd=l.src==='borda',now=performance.now()/1000;
   if(bd){const ed=edgeStep(l,l.ck,now);l.en=ed.en;}
   if(l.en)l.q=l.d;const n1=1-(l.d&l.en),n2=1-(n1&l.en);
-  const wt=now;if(clk('latch').run&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(bd?[l.ck,l.en,l.q]:[l.en,l.d,l.q]);if(S.wave.length>120)S.wave.shift();}
+  const wt=now;if((clk('latch').run||S.ch.on)&&wt-S.waveT>.05){S.waveT=wt;S.wave.push(bd?[l.ck,l.en,l.q]:[l.en,l.d,l.q]);if(S.wave.length>120)S.wave.shift();}
   Tx(`Q = ${l.q}`,400,92,44,T.ink,'center',T.text);
   Tx(bd?(l.en?'pulso de EN: o latch abre só agora, logo após a subida do relógio':'EN vem do detector de borda: só a subida do relógio abre o latch'):(l.en?'EN = 1: copia D (transparente)':'EN = 0: lembra (travado)'),400,136,22,l.en?T.hot:T.mute,'center',T.text);
   gates(DL,{d:l.d,en:l.en,n1,n2,q:l.q,qb:1-l.q},t,live&&!bd?live:false,l);
@@ -1114,8 +1132,8 @@ function uops(){
   const key=S.prog+'|'+S.a+'|'+S.b+'|'+S.base;if(key===uopKey)return uopVal;
   const p=prog(),mem0=initMem(),M={},rd=n=>n in M?M[n]:mem0(n),R={pc:0,ri:0,a:0,t0:0,t1:0},q=[];
   const put=o=>{q.push(o);if(o.set)Object.assign(R,o.set);};
-  let n=0,halt=false;
-  while(!halt&&n++<40&&q.length<110&&R.pc<p.code.length){
+  let n=0,halt=false;const stk=[];
+  while(!halt&&n++<60&&q.length<220&&R.pc<p.code.length){
     const pc=R.pc,by=rd(pc),op=by>>4,x=by&15,nm=p.names[x]||x;
     put({ph:0,t:'RI ← M[PC]; LER',a:'pc',c:'ri',rd:1,bus:{a:pc,c:by},set:{ri:by},d:`O PC sai pelo barramento A e vira endereço na memória. O dado lido entra pelo MUX no barramento C e vai ao RI.`});
     put({ph:0,t:'PC ← INC(PC)',a:'pc',c:'pc',f:'INC',bus:{a:pc,c:(pc+1)&15},set:{pc:(pc+1)&15},d:'A mesma ALU incrementa o PC. Não existe somador separado.'});
@@ -1130,6 +1148,8 @@ function uops(){
     else if(op===6)put({ph:2,t:'PC ← OPER(RI)',a:'ri',c:'pc',f:'OPER',bus:{a:by,c:x},set:{pc:x},d:`O destino do desvio está no operando e vai direto ao PC pelo barramento C.`});
     else if(op===7){const z=R.a===0;put({ph:2,t:'testa Z',zf:1,d:`O acumulador vale ${fmt8(R.a)}. Flag Z = ${z?1:0}: ${z?'a UC ativa a micro-operação de desvio':'o desvio não acontece'}.`});
       if(z)put({ph:2,t:'PC ← OPER(RI)',a:'ri',c:'pc',f:'OPER',bus:{a:by,c:x},set:{pc:x},d:'Com Z = 1, o operando vai ao PC.'});}
+    else if(op===8){if(stk.length>=4){halt=true;put({ph:2,t:'parar',d:'Pilha de retorno cheia: a UC para.'});}else{stk.push(R.pc);put({ph:2,t:'PILHA ← PC',sk:1,skv:R.pc,set:{stk:stk.slice()},d:`O endereço de volta, ${R.pc}, que o PC já aponta, vai direto para a pilha de retorno, sem passar pela ALU.`});put({ph:2,t:'PC ← OPER(RI)',a:'ri',c:'pc',f:'OPER',bus:{a:by,c:x},set:{pc:x},d:'O PC recebe o endereço da função, que está no operando.'});}}
+    else if(op===9){if(!stk.length){halt=true;put({ph:2,t:'parar',d:'RET com a pilha vazia: a UC para.'});}else{const r=stk.pop();put({ph:2,t:'PC ← PILHA',sk:-1,skv:r,set:{pc:r,stk:stk.slice()},d:`O PC recebe ${r}, o endereço guardado no topo da pilha de retorno, por um caminho direto.`});}}
     else if(op===15){halt=true;put({ph:2,t:'parar',d:`HLT: o sequenciador da UC para. c = ${fmt8(rd(15))}.`});}
     else if(op===0)put({ph:2,t:'nada',d:'NOP: nenhuma micro-operação de execução. O ciclo só serviu para buscar e decodificar.'});
     else put({ph:2,t:'—',d:'Opcode sem micro-programa.'});
@@ -1143,7 +1163,7 @@ function wrapTx(str,x,y,size,col,maxw,lh,font){c.font=`${size*T.fs}px ${font||T.
   if(cur)ls.push(cur);ls.forEach((l,i)=>Tx(l,x,y+i*lh,size,col,'center',font||T.text));return ls.length;}
 function sceneDP(tc,live){
   const q=uops(),D=DUR.datapath(),tot=D.reduce((x,y)=>x+y,0),t=tc%tot;
-  const R={pc:0,ri:0,a:0,t0:0,t1:0,m:{}};let acc=0,act=null,af=0;
+  const R={pc:0,ri:0,a:0,t0:0,t1:0,m:{},stk:[]};let acc=0,act=null,af=0;
   for(let i=0;i<q.length;i++){const x=q[i];
     if(t>=acc+D[i]){if(x.set)Object.assign(R,x.set);}else if(t>=acc&&!act){act=x;af=(t-acc)/D[i];}
     acc+=D[i];}
@@ -1158,9 +1178,9 @@ function sceneDP(tc,live){
   on3.forEach(([x,n,on])=>{Ln([[x,178],[x,ALY]],on?T.hot:T.dim,on?3.4:1.8);Tx(n,x,168,19,on?T.hot:T.mute);});
   Ln([[CB,ALY],[CB,700]],C?T.hot:T.dim,C?3.4:1.8);
   // registradores
-  RG.forEach(r=>{const y=RY[r],hl=A===r||B===r||C===r||(ZF&&r==='a'),v=R[r];
+  RG.forEach(r=>{const y=RY[r],hl=A===r||B===r||C===r||(ZF&&r==='a')||(!!(act&&act.sk)&&r==='pc'),v=R[r];
     Rc(RL,y-21,RR-RL,42,hl?T.hot:T.ink,hl?3.4:1.5,T.bg);
-    Tx(RGN[r],RL+24,y+1,21,T.ink,'center',T.text);Tx(r==='pc'?bin(v,4):bin(v),388,y+1,18,T.ink);Tx('= '+fmt8(v),RR-10,y+1,15,T.mute,'right');
+    Tx(RGN[r],RL+24,y+1,21,T.ink,'center',T.text);Tx(r==='pc'?bin(v,4):bin(v),352,y+1,18,T.ink);Tx('= '+fmt8(v),RR-10,y+1,15,T.mute,'right',T.mono,70);
     Ln([[CB,y],[RL-6,y]],C===r?T.hot:T.dim,C===r?3:1.5);if(C===r)Ln([[RL-15,y-6],[RL-6,y],[RL-15,y+6]],T.hot,3);
     Ln([[RR,y],[AB,y]],A===r?T.hot:T.dim,A===r?3:1.5);if(A===r)Ln([[AB-9,y-6],[AB,y],[AB-9,y+6]],T.hot,3);
     Ln([[RR,y],[BB,y]],B===r?T.hot:T.dim,B===r?3:1.5);if(B===r)Ln([[BB-9,y-6],[BB,y],[BB-9,y+6]],T.hot,3);});
@@ -1170,6 +1190,8 @@ function sceneDP(tc,live){
   if(ZF)Ln([[250,RY.a],[218,RY.a],[218,RY.a-18]],T.hot,2,[4,4],-tc*30);
 
   Tx('T0 e T1 são temporários: existem no circuito, mas o programador não os enxerga',400,470,16,T.mute,'center',T.text);
+  if(prog().code.some(z=>z[0]===8||z[0]===9)){const sk=act&&act.sk,hi=sk>0?R.stk.length:sk<0?R.stk.length-1:-1;Tx('pilha de retorno',715,374,13,sk?T.hot:T.mute,'center',T.text);
+    Ln([[RR,RY.pc],[616,RY.pc],[616,420],[646,420]],sk?T.hot:T.dim,sk?2.6:1.4);for(let i=0;i<4;i++){const x=650+i*32,v=R.stk[i];Rc(x,402,30,36,i===hi?T.hot:v!==undefined?T.ink:T.dim,i===hi?2.6:1.3,T.bg);if(v!==undefined)Tx(bin(v,4),x+15,420,11,T.ink,'center',T.mono,27);}}
   // decodificadores e relogio (tracejado = controle)
   const dec=(x0,y0,lab,sel,px,lft)=>{const on=!!sel;Rc(x0,y0,150,40,on?T.hot:T.ink,on?2.6:1.5,T.bg);Tx(lab,x0+75,y0+21,17,on?T.hot:T.ink,'center',T.text);
     if(sel)Ln(lft?[[x0+75,y0+40],[x0+75,RY[sel]],[RL-8,RY[sel]]]:[[x0,y0+20],[px,y0+20],[px,RY[sel]],[RR+8,RY[sel]]],T.hot,2,[6,5],-tc*30);};
@@ -1194,17 +1216,18 @@ function sceneDP(tc,live){
   if(act){const dot=(pts,v)=>{const e=ease(af);for(let j=4;j>=1;j--){const o=along(pts,e-j*.03);al(.13*(5-j)/4);Ci(o[0],o[1],8,null,0,T.hot);}al(1);const o=along(pts,e);Ci(o[0],o[1],9,null,0,T.hot);if(v!==undefined)Tx(fmt8(v),o[0]+14,o[1]-17,17,T.hot,'left');};
     if(A)dot(RD||WR?[[RR,RY[A]],[AB,RY[A]],[AB,562],[80,562],[80,ALY]]:[[RR,RY[A]],[AB,RY[A]],[AB,ALY]],bus.a);
     if(B)dot(WR?[[RR,RY[B]],[BB,RY[B]],[BB,528],[118,528],[118,ALY]]:[[RR,RY[B]],[BB,RY[B]],[BB,ALY]],bus.b);
+    if(act.sk){const sx=650+(act.sk>0?R.stk.length:R.stk.length-1)*32+15,pth=[[RR,RY.pc],[616,RY.pc],[616,420],[sx,420]];dot(act.sk>0?pth:pth.slice().reverse(),act.skv);}
     if(C)dot(RD?[[80,ALY+86],[80,770],[165,770],[165,742],[200,742],[200,700],[CB,700],[CB,RY[C]],[RL,RY[C]]]:[[540,ALY+86],[540,770],[235,770],[235,742],[200,742],[200,700],[CB,700],[CB,RY[C]],[RL,RY[C]]],bus.c);}
 }
 
 const TxW=(str,y,size,col,mw)=>wrapTx(str,400,y,size,col,mw||700,size*1.4);
 /* a instrução é só um número: bits clicáveis, campos e fios */
-const OPDESC={0:'não faz nada',1:'A recebe o conteúdo do endereço #',2:'A recebe A + o conteúdo do endereço #',3:'A recebe A − o conteúdo do endereço #',4:'o endereço # recebe o valor de A',5:'A recebe o próprio número #',6:'a próxima instrução vem do endereço #',7:'se Z = 1, a próxima instrução vem do endereço #',15:'o processador para'};
+const OPDESC={0:'não faz nada',1:'A recebe o conteúdo do endereço #',2:'A recebe A + o conteúdo do endereço #',3:'A recebe A − o conteúdo do endereço #',4:'o endereço # recebe o valor de A',5:'A recebe o próprio número #',6:'a próxima instrução vem do endereço #',7:'se Z = 1, a próxima instrução vem do endereço #',8:'guarda o endereço de volta na pilha e salta para #',9:'volta ao endereço guardado no topo da pilha',15:'o processador para'};
 function sceneInstr(t,live){
   const by=S.ins&255,op=by>>4,n=by&15,p=prog(),nm=p.names||{},mn=OPN[op],mem=initMem();
-  const kind=op>=1&&op<=4?'mem':op===5?'num':op===6||op===7?'jmp':'none',fam=op===2||op===3;
+  const kind=op>=1&&op<=4?'mem':op===5?'num':op>=6&&op<=8?'jmp':'none',fam=op===2||op===3;
   Tx(`${bin(op,4)} ${bin(n,4)}   =   ${mn?dis(by,nm):'???'}`,400,52,34,T.ink,'center',T.mono);
-  Tx(mn?OPDESC[op].replace('#',String(n)+(kind==='mem'&&nm[n]?` (${nm[n]})`:'')):'opcode não usado: o processador não define o que fazer',400,84,17,T.mute,'center',T.text);
+  Tx(mn?OPDESC[op].replace('#',(kind==='num'?fmt8(n):String(n))+(kind==='mem'&&nm[n]?` (${nm[n]})`:'')):'opcode não usado: o processador não define o que fazer',400,84,17,T.mute,'center',T.text);
   const BX=[130,200,270,340,460,530,600,670];
   for(let j=0;j<8;j++){const bit=7-j,v=by>>bit&1,x=BX[j];
     Tx(`bit ${bit}`+(bit===4&&fam?' · SUB':''),x,214,12,bit===4&&fam?T.hot:T.mute,'center',T.text);
@@ -1307,7 +1330,7 @@ function cmosOut(cx,out,foot){Ln([[cx,380],[656,380]],out?T.hot:T.dim,out?2.8:1.
 function cmosXor(k,A,B,live){
   const VD=120,GD=640,NY=380,xn=k==='xnor',sv={A,B,nA:1-A,nB:1-B},lb={A:'A',B:'B',nA:'¬A',nB:'¬B'},ky={A:'a',B:'b'};
   Tx(`${GT[k].n} em CMOS   ·   12 transistores`,400,46,28,T.ink,'center',T.mono);
-  TxW('célula própria: 2 inversores e uma rede de 8 transistores. Montada com NAND, seriam 16.',80,16,T.mute);
+  TxW(`célula própria: 2 inversores e uma rede de 8 transistores. Montada com NAND, seriam ${GT[k].eq.length*4}.`,80,16,T.mute);
   cmosRails();
   [[100,A,'a','A'],[250,B,'b','B']].forEach(([cx,v,key,lab])=>{Ln([[cx,VD],[cx,214]],T.ink,1.8);mos(cx,240,1,!v,v,key,live,lab);Ln([[cx,266],[cx,454]],T.ink,1.8);mos(cx,480,0,!!v,v,key,live,lab);Ln([[cx,506],[cx,GD]],T.ink,1.8);
     Ln([[cx,NY],[cx+34,NY]],v?T.dim:T.hot,v?1.6:2.6);term(cx+46,NY,11,1-v,12);Tx('¬'+lab,cx+46,NY+26,14,T.ink,'center',T.text);});
@@ -1339,11 +1362,81 @@ function cmos3(k,A,B,C,live){
   cmosOut(cx,pu?1:0,'cada transistor a mais em série deixa a porta mais lenta: portas largas viram árvores');return pu?1:0;
 }
 
+/* mapa de memória de um programa C */
+const RcD=(x,y,w,h,col,lw,d)=>Ln([[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]],col,lw,d);
+const MM_SRC=[
+ ['const char msg[] = "pronto";','rodata'],
+ ['int total = 5;','data'],
+ ['int contador;','bss'],
+ ['',null],
+ ['int soma(int x, int y) {','text'],
+ ['    int r = x + y;','stack'],
+ ['    return r;','stack'],
+ ['}',null],
+ ['int main(void) {','text'],
+ ['    int a = 2;','stack'],
+ ['    int *p = malloc(4);','heap'],
+ ['    *p = soma(a, total);','heap'],
+ ['    contador++;','bss'],
+ ['    return 0;','stack'],
+ ['}',null]];
+const MM_REG={text:'text: o código de máquina das funções. Só leitura.',rodata:'rodata: constantes, como os textos entre aspas. Só leitura.',data:'data: variáveis globais com valor inicial.',bss:'bss: variáveis globais sem valor inicial. Começam em 0.',heap:'heap: memória pedida com malloc. Dura até o free.',stack:'stack (pilha): variáveis locais e endereços de volta. Somem quando a função retorna.'};
+const MM_STEP=[
+ {l:[0,1,2],t:'O sistema carrega o programa: o código vai para text, a frase para rodata e total, já com 5, para data. contador fica em bss, zerada.',m:'Ao ligar, o código e as constantes já estão na flash. O boot copia o 5 de total da flash para a RAM e zera contador.'},
+ {l:[8],t:'main começa: a pilha ganha um quadro com espaço para a e p, ainda com lixo.'},
+ {l:[9],t:'a = 2 é gravado na pilha, dentro do quadro de main.'},
+ {l:[10],t:'malloc(4) reserva 4 bytes no heap. p, que mora na pilha, guarda o endereço desse bloco.'},
+ {l:[11,4],t:'soma(a, total) empilha um quadro novo: o endereço de volta, x e y. A pilha cresce para baixo.'},
+ {l:[5],t:'r = x + y = 7: mais uma variável local, no quadro de soma.'},
+ {l:[6,11],t:'return r: o quadro de soma é liberado, e o 7 é gravado no bloco do heap.'},
+ {l:[12],t:'contador++ altera a global em bss: ela existe do início ao fim do programa.'},
+ {l:[13],t:'main termina e a pilha esvazia. O bloco do heap continua reservado: sem free, ele vaza.'}];
+function mmLayout(mcu){
+  if(!mcu)return {cols:[['memória do processo',480,290]],R:{stack:[480,110,290,178],free:[480,288,290,92],heap:[480,380,290,60],bss:[480,440,290,50],data:[480,490,290,50],rodata:[480,540,290,50],text:[480,590,290,60]}};
+  return {cols:[['flash',466,150],['RAM',630,150]],R:{text:[466,520,150,130],rodata:[466,470,150,50],dataI:[466,420,150,50],stack:[630,110,150,178],free:[630,288,150,92],heap:[630,380,150,60],bss:[630,440,150,60],data:[630,500,150,60]}};
+}
+function sceneMapa(t,live){
+  const mcu=S.mm.mode==='mcu',st=MM_STEP.length,per=2.6,k=Math.min(st-1,Math.floor((t%(st*per)+.01)/per)),S_=MM_STEP[k],L=mmLayout(mcu),R=L.R;
+  const selReg=S.mm.sel>=0?MM_SRC[S.mm.sel][1]:null,hotReg={0:['text','rodata','data','bss','dataI'],1:['stack'],2:['stack'],3:['heap','stack'],4:['stack'],5:['stack'],6:['stack','heap'],7:['bss'],8:['stack']}[k];
+  Tx('Onde moram as variáveis de um programa C',400,44,26,T.ink,'center',T.text);
+  // código
+  MM_SRC.forEach(([s,reg],i)=>{const y=122+i*31,on=S_.l.includes(i),sel=i===S.mm.sel;if(!s)return;
+    if(sel)Rc(30,y-14,420,28,T.hot,1.4);Tx(s,38,y,17,on?T.hot:T.ink,'left',T.mono,404);
+    if(live&&reg)zones.push({x:240,y,r:14,box:[30,y-14,420,28],fn(){S.mm.sel=S.mm.sel===i?-1:i;}});});
+  // colunas
+  L.cols.forEach(([n,x,w])=>Tx(n,x+w/2,92,15,T.mute,'center',T.text));
+  if(!mcu){Tx('0xFFFF',770,105,10,T.mute,'right',T.mono);Tx('0x0000',770,661,10,T.mute,'right',T.mono);}
+  const reg=(key,lab)=>{const [x,y,w,h]=R[key],on=hotReg.includes(key)||selReg===key||(key==='dataI'&&selReg==='data');
+    Rc(x,y,w,h,on?T.hot:T.ink,on?2.4:1.2,T.bg);Tx(lab||key,x+8,y+12,12,on?T.hot:T.mute,'left',T.mono,w-16);};
+  const cell=(key,row,s,hot)=>{const [x,y,w]=R[key];Tx(s,x+12,y+30+row*20,14,hot?T.hot:T.ink,'left',T.mono,w-20);};
+  ['stack','heap','bss','data','rodata','text'].forEach(r=>reg(r));if(mcu)reg('dataI','data (valor inicial)');
+  { const [x,y,w,h]=R.free;noGlow(()=>RcD(x,y,w,h,T.dim,1,[5,5]));Tx('↓ a pilha cresce',x+w/2,y+18,12,T.mute,'center',T.text);Tx('↑ o heap cresce',x+w/2,y+h-14,12,T.mute,'center',T.text);}
+  cell('text',0,'main()   soma()');cell('rodata',0,'msg = "pronto"');
+  cell('data',0,'total = 5',k===0);cell('bss',0,`contador = ${k>=7?1:0}`,k===7||k===0);
+  if(mcu){cell('dataI',0,'total = 5');const a=R.dataI,b=R.data,ya=a[1]+a[3]/2,yb=b[1]+b[3]/2;Ln([[a[0]+a[2],ya],[623,ya],[623,yb],[b[0],yb]],k===0?T.hot:T.dim,k===0?2:1.2);Ln([[b[0]-7,yb-5],[b[0],yb],[b[0]-7,yb+5]],k===0?T.hot:T.dim,1.2);
+    Tx('cópia no boot',548,ya-34,12,k===0?T.hot:T.mute,'center',T.text);Tx('zerada no boot',R.bss[0]+R.bss[2]-8,R.bss[1]+R.bss[3]-10,11,k===0?T.hot:T.mute,'right',T.text);}
+  // heap
+  if(k>=3){const [x,y,w]=R.heap;Rc(x+10,y+22,Math.min(130,w-20),28,k===3||k===6?T.hot:T.ink,1.6,T.bg);Tx(`*p = ${k>=6?7:'?'}`,x+18,y+36,14,k===6?T.hot:T.ink,'left',T.mono,Math.min(130,w-20)-14);}
+  // pilha: quadros
+  const [sx,sy,sw]=R.stack;let py=null;
+  if(k>=1&&k<=7){const fy=sy+22,on=k<=3;Rc(sx+8,fy,sw-16,64,on?T.hot:T.ink,on?2:1.2);Tx('quadro de main',sx+sw-14,fy+11,11,T.mute,'right',T.text,sw-60);
+    Tx(`a = ${k>=2?2:'?'}`,sx+18,fy+30,14,k===2?T.hot:T.ink,'left',T.mono,sw-36);Tx(`p = ${k>=3?'→ heap':'?'}`,sx+18,fy+50,14,k===3?T.hot:T.ink,'left',T.mono,sw-36);py=fy+50;}
+  if(k===4||k===5){const fy=sy+92,on=true;Rc(sx+8,fy,sw-16,80,T.hot,2);Tx('quadro de soma',sx+sw-14,fy+11,11,T.mute,'right',T.text,sw-60);
+    Tx('volta → main',sx+18,fy+30,13,T.ink,'left',T.mono,sw-36);Tx('x = 2   y = 5',sx+18,fy+48,14,T.ink,'left',T.mono,sw-36);Tx(`r = ${k>=5?7:'?'}`,sx+18,fy+66,14,k===5?T.hot:T.ink,'left',T.mono,sw-36);}
+  if(k===6){const fy=sy+92;noGlow(()=>RcD(sx+8,fy,sw-16,80,T.dim,1.2,[4,4]));Tx('quadro liberado',sx+sw/2,fy+40,13,T.mute,'center',T.text);}
+  if(py!==null&&k>=3){const hx=R.heap[0]+10+Math.min(130,R.heap[2]-20),hy=R.heap[1]+36,xr=R.stack[0]+R.stack[2]+12,c_=k===3?T.hot:T.mute;
+    Ln([[sx+sw-8,py],[xr,py],[xr,hy],[hx+6,hy]],c_,1.4);Ln([[hx+13,hy-5],[hx+6,hy],[hx+13,hy+5]],c_,1.4);}
+  // texto
+  const txt=selReg?MM_REG[selReg]+(mcu&&(selReg==='text'||selReg==='rodata')?' Num microcontrolador, fica na flash.':mcu&&selReg==='data'?' O valor inicial fica na flash e é copiado para a RAM no boot.':''):(mcu&&S_.m?S_.m:S_.t);
+  const nl=TxW(selReg?txt:`${k+1}/${st}  ${txt}`,690,16,selReg?T.hot:T.ink,740);
+  TxW(selReg?'toque na linha de novo para voltar à execução':'toque numa linha do código para ver em que região ela mora',690+nl*22+8,13,T.mute);
+}
+
 const SCN={
- c:{n:'Linguagem C',t:'O compilador traduz o texto em instruções de máquina. Escolha o programa: a soma mostra as etapas; if e while mostram de onde vêm os desvios.',draw:(t,l)=>prog().custom?sceneCustomAsm(t):S.prog?sceneFlow(t):scene0(t),hots:[{to:'cpu',main:1,x:108,y:126,w:584,h:458},{to:'instr',x:585,y:604,w:110,h:36}]},
+ c:{n:'Linguagem C',t:'O compilador traduz o texto em instruções de máquina. Escolha o programa: a soma mostra as etapas; if e while mostram de onde vêm os desvios; função mostra a chamada e o retorno.',draw:(t,l)=>prog().custom?sceneCustomAsm(t):S.prog?sceneFlow(t):scene0(t),hots:[{to:'cpu',main:1,x:108,y:126,w:584,h:458},{to:'instr',x:585,y:604,w:110,h:36}]},
  cpu:{n:'Processador',t:'O ciclo se repete a cada instrução: buscar, decodificar, executar. Toque em uma parte para abri-la.',draw:scene1,hots:[{to:'datapath',main:1,x:436,y:398,w:358,h:326},{to:'mem',x:90,y:180,w:220,h:476},{to:'reg',x:450,y:180,w:250,h:65},{to:'uc',x:450,y:295,w:250,h:65},{to:'pc',x:90,y:710,w:140,h:60}]},
  datapath:{n:'Caminho de dados',t:'Os registradores conversam por três barramentos: dois levam operandos à ALU e um traz o resultado de volta. Cada instrução é uma sequência de micro-operações.',draw:sceneDP,hots:[{to:'alu',main:1,x:430,y:590,w:220,h:86},{to:'reg',x:250,y:399,w:230,h:42},{to:'dec',x:630,y:196,w:150,h:40},{to:'mem',x:20,y:590,w:120,h:86},{to:'mux',x:140,y:700,w:120,h:42}]},
- mem:{n:'Memória',t:'O endereço entra no decodificador, que acende uma única linha. Os oito bits daquela linha saem como dado.',draw:sceneMem,hots:[{to:'latch',x:646,y:456,w:50,h:44},{to:'dec',x:60,y:150,w:120,h:476}]},
+ mem:{n:'Memória',t:'O endereço entra no decodificador, que acende uma única linha. Os oito bits daquela linha saem como dado.',draw:sceneMem,hots:[{to:'latch',x:646,y:456,w:50,h:44},{to:'dec',x:60,y:150,w:120,h:476},{to:'mapa',x:500,y:754,w:270,h:36}]},
  reg:{n:'Registrador',t:'Oito flip-flops lado a lado. No pulso de clock, todos copiam a entrada ao mesmo tempo.',draw:sceneReg,hots:[{to:'ff',x:658,y:350,w:68,h:90}]},
  ff:{n:'Flip-flop D',t:'Só a borda de subida do relógio captura D. Compare as duas construções: mestre-escravo e detector de borda. Toque em D e no relógio.',draw:sceneFF,hots:[{to:'latch',x:200,y:270,w:160,h:160}]},
  latch:{n:'Latch D',t:'Quatro NAND em laço. Com EN em 1 a saída copia D; com EN em 0, o laço lembra o bit. Toque em D e EN.',draw:sceneLatch,hots:[{to:'portas',gate:'nand',x:526,y:362,w:72,h:56}]},
@@ -1364,6 +1457,7 @@ const SCN={
  instr:{n:'A instrução',t:'Para o processador, a instrução é só um número. Toque nos bits: o mesmo byte vira outra instrução ou aponta para outra variável.',draw:sceneInstr,hots:[{to:'dec',x:102,y:262,w:266,h:34}]},
  escala:{n:'Escala e tempo',t:'Quanto tempo leva uma soma e quantos transistores cabem num chip. A barra em destaque segue o modo da ALU: cascata ou CLA.',draw:sceneEscala,hots:[]},
  chip:{n:'Células padrão',t:'No chip, cada porta é uma célula de altura fixa. As células formam fileiras, as fileiras formam blocos, e os blocos formam o processador.',draw:sceneChip,hots:[{to:'fios',x:612,y:420,w:160,h:160}]},
+ mapa:{n:'Mapa de memória',t:'Onde cada variável de um programa C fica guardada: text, rodata, data, bss, heap e pilha. Avance passo a passo ou toque numa linha do código.',draw:sceneMapa,hots:[]},
  fios:{n:'Camadas de fios',t:'Acima dos transistores, camadas de metal ligam as células. Vias verticais sobem e descem entre elas.',draw:sceneFios,hots:[]},
  silicio:{n:'Cristal de silício',t:'Entre os polos, elétrons vão para o positivo e lacunas para o negativo. Dopar é trocar um átomo em milhões.',draw:sceneSi,hots:[{to:'atomo',x:366,y:366,w:68,h:68}]},
  atomo:{n:'Átomo',t:'Só os elétrons da última camada fazem ligações. Silício tem 4, fósforo 5, boro 3.',draw:sceneAtom,hots:[]}
@@ -1371,9 +1465,9 @@ const SCN={
 const cur=()=>S.path[S.path.length-1].id;
 
 const EXPL={
- c:`<p>Para o processador, um programa em C é só texto. O compilador o traduz em etapas: a análise léxica separa os símbolos, a sintática os organiza em uma árvore que respeita a precedência das operações, e a geração de código transforma cada operação em instruções de máquina.</p><p>Na montagem, cada mnemônico vira um opcode de 4 bits e cada nome vira um endereço: a mora no 13, b no 14 e c no 15. Para a máquina, o nome não existe.</p><p>As variáveis são uint8_t, de 0 a 255. Uma soma que passa de 255 perde o nono bit, e c guarda só os 8 bits de baixo.</p><p>Nos programas com desvio, comparar é subtrair: o if vira um JZ, que salta quando o resultado deu zero, e o fim de um laço vira um JMP de volta ao teste.</p><p class="s">Simplificação: faltam o pré-processamento, a análise semântica, a otimização e a ligação.</p>`,
- cpu:`<p>Toda instrução passa pelo mesmo ciclo. Na busca, o PC fornece o endereço, a memória entrega o byte ao registrador de instrução e o PC avança. Na decodificação, a unidade de controle lê os 4 bits de opcode. Na execução, ela comanda as transferências que a instrução pede.</p><p>Cada instrução ocupa 1 byte: 4 bits de opcode e 4 de operando, que é um endereço ou uma constante de 0 a 15. Instruções e dados ficam na mesma memória; um byte só é tratado como instrução quando o PC aponta para ele.</p><p>O acumulador guarda um operando e recebe os resultados. A flag Z vale 1 quando ele é zero, e é ela que o JZ consulta para decidir se desvia.</p><p>No modo pipeline, etapas de instruções vizinhas se sobrepõem: enquanto uma executa, a seguinte é decodificada e a outra buscada. Um desvio tomado descarta o que foi buscado à frente.</p><p class="s">Simplificação: 8 bits, 16 bytes de memória e um único acumulador. O pipeline é ilustrativo: as micro-operações continuam mostradas em sequência.</p>`,
- datapath:`<p>Os registradores se comunicam por três barramentos. A e B levam operandos à ALU; C traz o resultado de volta. São dois de leitura porque a ALU precisa de dois operandos no mesmo ciclo.</p><p>Cada barramento é escolhido por um decodificador comandado pela unidade de controle. O Dec. A liga a saída de um registrador ao barramento A, o Dec. B faz o mesmo no B, e o Dec. C escolhe quem será gravado na próxima borda do relógio.</p><p>A memória usa os mesmos barramentos: o endereço sai pelo A, o dado a gravar pelo B, e o dado lido entra no C por um multiplexador que escolhe entre a ALU e a memória.</p><p>Uma micro-operação é o que cabe em um ciclo de clock. Um ADD gasta seis: duas de busca, uma de decodificação e três de execução. T0 e T1 são temporários que o programador não enxerga.</p><p class="s">Organização adaptada do computador ARC de Murdocca e Heuring.</p>`,
+ c:`<p>Para o processador, um programa em C é só texto. O compilador o traduz em etapas: a análise léxica separa os símbolos, a sintática os organiza em uma árvore que respeita a precedência das operações, e a geração de código transforma cada operação em instruções de máquina.</p><p>Na montagem, cada mnemônico vira um opcode de 4 bits e cada nome vira um endereço: a mora no 13, b no 14 e c no 15. Para a máquina, o nome não existe.</p><p>As variáveis são uint8_t, de 0 a 255. Uma soma que passa de 255 perde o nono bit, e c guarda só os 8 bits de baixo.</p><p>Nos programas com desvio, comparar é subtrair: o if vira um JZ, que salta quando o resultado deu zero, e o fim de um laço vira um JMP de volta ao teste.</p><p class="s">Simplificação: faltam o pré-processamento, a análise semântica, a otimização e a ligação.</p><p>No programa função, o argumento passa pelo acumulador: LDA a o carrega, CALL salta para a função, e o resultado volta no próprio acumulador. Dentro da função, x + x precisa de um endereço temporário, t, porque ADD só soma o acumulador com a memória.</p>`,
+ cpu:`<p>Toda instrução passa pelo mesmo ciclo. Na busca, o PC fornece o endereço, a memória entrega o byte ao registrador de instrução e o PC avança. Na decodificação, a unidade de controle lê os 4 bits de opcode. Na execução, ela comanda as transferências que a instrução pede.</p><p>Cada instrução ocupa 1 byte: 4 bits de opcode e 4 de operando, que é um endereço ou uma constante de 0 a 15. Instruções e dados ficam na mesma memória; um byte só é tratado como instrução quando o PC aponta para ele.</p><p>O acumulador guarda um operando e recebe os resultados. A flag Z vale 1 quando ele é zero, e é ela que o JZ consulta para decidir se desvia.</p><p>No modo pipeline, etapas de instruções vizinhas se sobrepõem: enquanto uma executa, a seguinte é decodificada e a outra buscada. Um desvio tomado descarta o que foi buscado à frente.</p><p class="s">Simplificação: 8 bits, 16 bytes de memória e um único acumulador. O pipeline é ilustrativo: as micro-operações continuam mostradas em sequência.</p><h3>Funções: CALL e RET</h3><p>No programa função, CALL 5 faz duas coisas: guarda na pilha de retorno o endereço que o PC já aponta, o 2, e coloca 5 no PC. No fim da função, RET tira o 2 do topo da pilha e o devolve ao PC, e a execução continua logo depois da chamada.</p><p>Aqui a pilha de retorno fica dentro do processador e tem 4 níveis, como em microcontroladores PIC. Num PC, a pilha fica na RAM, apontada por um registrador, o SP, e guarda também os parâmetros e as variáveis locais de cada chamada: veja o mapa de memória, a partir da cena Memória.</p>`,
+ datapath:`<p>Os registradores se comunicam por três barramentos. A e B levam operandos à ALU; C traz o resultado de volta. São dois de leitura porque a ALU precisa de dois operandos no mesmo ciclo.</p><p>Cada barramento é escolhido por um decodificador comandado pela unidade de controle. O Dec. A liga a saída de um registrador ao barramento A, o Dec. B faz o mesmo no B, e o Dec. C escolhe quem será gravado na próxima borda do relógio.</p><p>A memória usa os mesmos barramentos: o endereço sai pelo A, o dado a gravar pelo B, e o dado lido entra no C por um multiplexador que escolhe entre a ALU e a memória.</p><p>Uma micro-operação é o que cabe em um ciclo de clock. Um ADD gasta seis: duas de busca, uma de decodificação e três de execução. T0 e T1 são temporários que o programador não enxerga.</p><p>No CALL e no RET, o PC troca o endereço de volta direto com a pilha de retorno, sem passar pela ALU.</p><p class="s">Organização adaptada do computador ARC de Murdocca e Heuring.</p>`,
  mem:`<p>A memória é uma matriz de células de 1 bit. O endereço entra em um decodificador, que acende uma única linha; os 8 bits daquela linha saem pelas colunas como dado.</p><p>Com 4 bits de endereço há 2⁴ = 16 linhas. Cada byte pode ser instrução ou dado: a diferença está só em quem o lê.</p><p class="s">Simplificação: cada célula aparece como um latch. Uma SRAM real usa 6 transistores por bit, e uma DRAM usa 1 transistor e 1 capacitor.</p>`,
  reg:`<p>Um registrador de 8 bits são oito flip-flops D lado a lado, no mesmo relógio. Entre um pulso e outro as entradas D podem mudar livremente; as saídas Q só copiam D no pulso.</p><p>É isso que sincroniza o processador: todos os registradores mudam no mesmo instante, e entre duas bordas os circuitos combinacionais têm tempo de calcular o valor seguinte.</p>`,
  ff:`<p>Um flip-flop D captura a entrada só na borda do relógio. Há duas construções clássicas.</p><p>Mestre-escravo: dois latches em série, com o relógio invertido entre eles. Com o relógio em 0, o mestre copia D e o escravo fica fechado; na subida, o mestre fecha e o escravo entrega o valor guardado. Como os dois nunca ficam abertos juntos, D só atravessa na borda.</p><p>Detector de borda: uma porta AND recebe o relógio e uma cópia dele invertida e atrasada por inversores. Logo após a subida, durante o atraso, as duas entradas valem 1 e a AND gera um pulso curto. Esse pulso é o enable de um único latch, que fica aberto só por esse instante.</p><p>Nas duas, mudar D fora da borda não altera Q.</p>`,
@@ -1387,12 +1481,13 @@ const EXPL={
  nand:`<p>O mesmo somador, só com portas NAND. Trocar cada porta pelo seu equivalente custa 15 NAND. Inversores em sequência se anulam, e sobram 11. Por fim, as portas 1 e 5 passam a servir tanto ao cálculo de S quanto ao de Cout, e o circuito fica com 9 NAND, ou 36 transistores.</p><p class="s">Somadores CMOS industriais otimizados usam 28 transistores.</p>`,
  portas:`<p>A NAND é universal: qualquer função lógica pode ser montada só com ela. NOT é uma NAND com as entradas unidas; AND é uma NAND seguida de NOT; OR é a NAND das entradas invertidas, pelo teorema de De Morgan: A + B = ¬(¬A · ¬B).</p><p>Ela serve de base porque é a porta mais simples de fabricar em CMOS, com 4 transistores, e porque um único tipo de célula simplifica o projeto do chip.</p>`,
  mux:`<p>O multiplexador é uma chave feita de portas: a seleção S decide qual sinal chega à saída. Saída = A·¬S + B·S.</p><p>Com S = 0, o inversor libera a AND de A e bloqueia a de B; com S = 1, o contrário. A entrada bloqueada não influencia a saída, qualquer que seja seu valor.</p><p>No caminho de dados, um multiplexador escolhe o que entra no barramento C: o resultado da ALU ou o dado lido da memória.</p>`,
- cmos:`<p>Em CMOS o transistor é uma chave controlada por tensão. O nMOS conduz com 1 na porta; o pMOS, marcado pela bolinha, conduz com 0.</p><p>Toda porta tem duas redes complementares: pMOS em cima, ligando a saída a VDD, e nMOS embaixo, ligando-a ao GND. Na NAND os pMOS ficam em paralelo e os nMOS em série: a saída só vai a 0 com A e B em 1. Na NOR é o inverso.</p><p>Como uma das redes está sempre aberta, quase não há corrente parada. E todo estágio CMOS simples é inversor: AND e OR precisam de uma NAND ou NOR seguida de NOT.</p><p>No modo de defeito, conduzir as duas redes juntas liga VDD ao GND (curto, X); abrir as duas deixa a saída flutuando (alta impedância, Z).</p><h3>XOR e portas de 3 entradas</h3><p>XOR e XNOR têm célula própria: dois inversores geram ¬A e ¬B, e uma rede de 8 transistores combina as quatro entradas. São 12 transistores, contra 16 da montagem com 4 NAND. Bibliotecas reais têm variantes ainda menores.</p><p>Uma NAND de 3 entradas tem 3 pMOS em paralelo e 3 nMOS em série, 6 transistores. Cada transistor a mais em série aumenta a resistência do caminho e deixa a porta mais lenta. Por isso, para juntar muitos sinais, como os 8 bits do Z, usa-se uma árvore de portas pequenas.</p><p>O CMOS também tolera ruído: a saída está sempre ligada com firmeza a VDD ou a GND, e uma pequena variação na entrada não muda qual rede conduz.</p>`,
+ cmos:`<p>Em CMOS o transistor é uma chave controlada por tensão. O nMOS conduz com 1 na porta; o pMOS, marcado pela bolinha, conduz com 0.</p><p>Toda porta tem duas redes complementares: pMOS em cima, ligando a saída a VDD, e nMOS embaixo, ligando-a ao GND. Na NAND os pMOS ficam em paralelo e os nMOS em série: a saída só vai a 0 com A e B em 1. Na NOR é o inverso.</p><p>Como uma das redes está sempre aberta, quase não há corrente parada. E todo estágio CMOS simples é inversor: AND e OR precisam de uma NAND ou NOR seguida de NOT.</p><p>No modo de defeito, conduzir as duas redes juntas liga VDD ao GND (curto, X); abrir as duas deixa a saída flutuando (alta impedância, Z).</p><h3>XOR e portas de 3 entradas</h3><p>XOR e XNOR têm célula própria: dois inversores geram ¬A e ¬B, e uma rede de 8 transistores combina as quatro entradas. São 12 transistores, contra 16 de uma XOR montada com 4 NAND e 20 de uma XNOR com 5. Bibliotecas reais têm variantes ainda menores.</p><p>Uma NAND de 3 entradas tem 3 pMOS em paralelo e 3 nMOS em série, 6 transistores. Cada transistor a mais em série aumenta a resistência do caminho e deixa a porta mais lenta. Por isso, para juntar muitos sinais, como os 8 bits do Z, usa-se uma árvore de portas pequenas.</p><p>O CMOS também tolera ruído: a saída está sempre ligada com firmeza a VDD ou a GND, e uma pequena variação na entrada não muda qual rede conduz.</p>`,
  layout:`<p>A mesma porta vista de cima, no silício. A faixa de difusão P, dentro do poço N, abriga os pMOS; a faixa de difusão N abriga os nMOS. As tiras verticais de polissilício são as entradas.</p><p>Onde o polissilício cruza uma difusão existe um transistor. Uma faixa cruzada por duas tiras forma dois transistores em série; contatos e metal ligam as difusões a VDD, ao GND e à saída.</p><p class="s">Simplificação: o desenho não segue regras de projeto e omite os contatos de poço e substrato.</p>`,
  mosfet:`<p>No nMOS, fonte e dreno são regiões tipo N em um substrato tipo P. Entre elas, uma camada fina de óxido isola a porta de polissilício, que funciona como a placa de um capacitor.</p><p>Abaixo da tensão de limiar Vth, as lacunas sob o óxido são repelidas e forma-se uma região de depleção, mas não há caminho entre fonte e dreno. Acima de Vth, o campo atrai elétrons suficientes para formar um canal tipo N, e a corrente passa. Quanto maior VGS, mais forte o canal.</p><p>O pMOS é o espelho: regiões P em um poço N, canal de lacunas, condução com VGS negativo.</p><p class="s">Simplificação: curva quadrática ideal, com Vth = 1 V e VDD = 5 V. Os chips atuais trabalham perto de 1 V, e o transistor é tridimensional: no FinFET, o canal é uma barbatana vertical abraçada pela porta por três lados, o que dá mais controle sobre a corrente em dimensões de poucos nanômetros.</p>`,
  pn:`<p>Onde o silício N encontra o P, elétrons e lacunas se recombinam e deixam uma faixa sem portadores livres, a depleção. Nela ficam só os íons fixos, positivos do lado N e negativos do lado P, que criam um campo contrário à difusão.</p><p>Na polarização direta, com o positivo no lado P, a barreira diminui: elétrons do N e lacunas do P chegam à junção e se recombinam, e a corrente flui. Na reversa, a barreira cresce e só passa uma pequena corrente de fuga. É o diodo.</p><p>No fio metálico só se movem elétrons; a lacuna existe apenas dentro do semicondutor.</p><p>A corrente de fuga vem de pares elétron-lacuna gerados pelo calor dentro da depleção, e cresce depressa com a temperatura.</p>`,
  fab:`<p>O transistor é construído em camadas sobre um disco de silício. Um forno faz crescer o óxido isolante; deposita-se o polissilício da porta; uma resina fotossensível é exposta à luz ultravioleta através de uma máscara, e as áreas não protegidas são removidas.</p><p>Depois, íons de fósforo são implantados. A porta já pronta bloqueia os íons sobre o canal, e por isso fonte e dreno ficam alinhados com ela sem outra máscara: é o processo autoalinhado. Por fim, o metal faz as ligações.</p><p class="s">Simplificação: faltam a remoção da resina, o recozimento, o isolamento entre transistores e as várias camadas de metal.</p>`,
  silicio:`<p>Cada átomo de silício faz quatro ligações com os vizinhos, e todos os elétrons de valência ficam presos nelas: o silício puro quase não conduz. O calor solta alguns, e cada elétron solto deixa uma lacuna para trás.</p><p>Dopar é trocar um átomo em milhões. O fósforo, com 5 elétrons, deixa um elétron sobrando: tipo N. O boro, com 3, deixa uma ligação incompleta, a lacuna: tipo P. Entre os polos, elétrons vão para o positivo, e as lacunas, que se comportam como cargas positivas, vão para o negativo.</p><p>Perto de 0 K os portadores ficam presos aos dopantes. Em temperaturas muito altas, por volta de 550 K para dopagens típicas, os pares gerados pelo calor superam os do dopante e o controle se perde. Chips comerciais operam até cerca de 400 K.</p><p class="s">Simplificação: a rede real é tridimensional e tetraédrica.</p>`,
+ mapa:`<p>Um programa C em execução divide a memória em regiões, cada uma com uma regra de vida.</p><p>Em <b>text</b> fica o código de máquina das funções, e em <b>rodata</b>, as constantes, como os textos entre aspas; as duas são só leitura. Em <b>data</b> ficam as globais com valor inicial, e em <b>bss</b>, as globais sem valor inicial, zeradas antes do main. Essas quatro existem do início ao fim do programa.</p><p>A <b>pilha</b> guarda as variáveis locais e o endereço de volta de cada chamada. Cada função que começa ganha um quadro, e o quadro é liberado no return; por isso uma variável local não guarda valor entre chamadas e começa com lixo. O <b>heap</b> guarda o que o programa pede com malloc, e o bloco só é liberado com free; esquecer o free é um vazamento de memória. A pilha cresce para baixo e o heap para cima, um em direção ao outro.</p><p>Num microcontrolador não há sistema operacional. text, rodata e o valor inicial das globais ficam na flash, que não perde o conteúdo sem energia. Ao ligar, o código de partida copia os valores de data da flash para a RAM e zera bss, antes de chamar o main.</p><p class="s">Os endereços são ilustrativos. A ordem real das regiões varia com o sistema e o compilador.</p>`,
  instr:`<p>Para o processador, a instrução é só um número de 8 bits, dividido em campos. Os 4 bits de cima são o opcode, que diz o que fazer; os 4 de baixo são o operando, que diz com quem: um endereço da memória, um número ou o destino de um salto.</p><p>Cada bit é um fio, com tensão alta para 1 e baixa para 0. Os fios do opcode entram num decodificador de 4 para 16, que acende uma única linha: a da instrução. Os fios do operando seguem para o endereço da memória.</p><p>ADD é 0010 e SUB é 0011: diferem só no bit 4. A unidade de controle aproveita isso, e esse bit vira o fio SUB da ALU, que inverte B e põe 1 no vai-um de entrada. Trocar o operando de 1110 para 1111 faz ADD b virar ADD c.</p><p class="s">Processadores reais usam instruções de 16, 32 ou mais bits, com mais campos: vários registradores de origem e destino e bits extras que refinam a operação. A ideia é a mesma.</p>`,
  escala:`<p>O simulador mostra a soma passo a passo, mas num chip ela é muito rápida. Uma porta lógica leva alguns picossegundos para responder; usamos 10 ps como ordem de grandeza.</p><p>No somador em cascata, o vai-um atravessa duas portas por bit: 8 bits custam cerca de 16 atrasos, e 32 bits, cerca de 64. Com o vai-um antecipado, o caminho cai para cerca de 4 atrasos. A 3 GHz, um ciclo dura 333 ps, e todo caminho entre dois registradores precisa caber nele. Nesse tempo, a luz percorre só 10 cm.</p><p>O processador deste simulador tem, por estimativa, cerca de 3.700 transistores, contando a memória como SRAM 6T. É a escala do Intel 4004, de 1971, com 2.300. Um chip atual, como o Apple M3 Max, tem 92 bilhões.</p><p class="s">Os atrasos são aproximados: dependem da tecnologia, da carga de cada porta e do comprimento dos fios.</p>`,
  chip:`<p>No chip, cada porta é desenhada uma vez, como uma célula padrão: uma peça de altura fixa, com os pMOS perto do trilho de VDD e os nMOS perto do GND. Uma biblioteca tem centenas delas: inversores, NAND, NOR, XOR, flip-flops.</p><p>As células se encaixam lado a lado em fileiras, como peças de Lego, e os trilhos de alimentação correm pela fileira inteira. Fileiras vizinhas são espelhadas para dividir o mesmo trilho.</p><p>As células formam macrocélulas, ou blocos: o nosso somador de 8 bits são 8 fileiras de 5 células. Os blocos formam núcleos, e os núcleos, o chip. Num processador real, um somador de 32 bits tem cerca de 160 células, e um multiplicador de 32 bits, cerca de 6.100.</p><p class="s">O nosso while multiplica por somas sucessivas, em software. O processador real tem um circuito multiplicador próprio, que faz a conta num único ciclo ou em poucos.</p>`,
@@ -1400,7 +1495,8 @@ const EXPL={
  atomo:`<p>Só os elétrons da última camada, os de valência, participam das ligações. O silício tem 4 e forma quatro ligações. O fósforo tem 5: um fica sem par e se solta. O boro tem 3: falta um elétron para completar as ligações, e essa falta é a lacuna.</p><p>É o fim da descida. Aqui não existe 5, nem 3, nem 8: só cargas, tensões e chaves que abrem e fecham porque outras abriram e fecharam antes. A soma não mora no chip, mas no jeito como os transistores foram organizados. Quem enxerga o 8 somos nós.</p>`
 };
 function renderHelp(){const h=$('#help');if(h.hidden)return;$('#help-t').textContent=SCN[cur()].n;$('#help-c').innerHTML=EXPL[cur()]||'';h.scrollTop=0;}
-function toggleHelp(o){const h=$('#help');h.hidden=o===undefined?!h.hidden:!o;$('#helpb').setAttribute('aria-expanded',String(!h.hidden));renderHelp();}
+let helpRet=null;function toggleHelp(o){const h=$('#help'),was=!h.hidden;h.hidden=o===undefined?!h.hidden:!o;$('#helpb').setAttribute('aria-expanded',String(!h.hidden));renderHelp();
+  if(!h.hidden&&!was){helpRet=document.activeElement;$('#help-x').focus();}else if(h.hidden&&was){const r=helpRet;helpRet=null;(r&&r!==document.body&&document.contains(r)?r:$("#helpb")).focus();}}
 
 function applyLayout(){layoutMem();const h=Math.min(44,PIT-6),L=prog().code.length,ap=L>8?(prog().custom?40:44):(prog().custom?46:48);
   Object.assign(SCN.mem.hots[0],{y:CY[13]-h/2,h});Object.assign(SCN.cpu.hots[1],{y:30+CY[0]-PIT/2+2,h:CY[15]-CY[0]+PIT-4});
@@ -1416,14 +1512,18 @@ const POOL={
   {q:'Na montagem, em que se transforma o nome b?',opts:['no endereço 14','no opcode 0010','no valor 3'],ans:0,ok:'No endereço 14. O montador troca nomes por endereços; o 3 é o conteúdo guardado ali, não o nome.'},
   {q:'No programa if / else, qual instrução faz a comparação a == b?',opts:['SUB b','JZ 5','STA c'],ans:0,ok:'SUB b. Comparar é subtrair: o JZ só consulta a flag Z que a subtração produziu.'},
   {q:'No programa while, qual instrução corresponde à chave que fecha o laço?',opts:['JZ 9','JMP 0','HLT'],ans:1,ok:'JMP 0, que volta ao teste. O JZ 9 é a saída do laço, quando b chega a zero.'},
-  {q:'Por que c = a + b vira três instruções e não uma?',opts:['o processador só soma o acumulador com um valor da memória: é preciso carregar, somar e guardar','o compilador é ineficiente','cada letra do código vira uma instrução'],ans:0,ok:'A ALU opera sobre o acumulador. Por isso LDA traz a, ADD soma b e STA guarda o resultado em c.'}
+  {q:'Por que c = a + b vira três instruções e não uma?',opts:['o processador só soma o acumulador com um valor da memória: é preciso carregar, somar e guardar','o compilador é ineficiente','cada letra do código vira uma instrução'],ans:0,ok:'A ALU opera sobre o acumulador. Por isso LDA traz a, ADD soma b e STA guarda o resultado em c.'},
+  {q:'Em c = dobro(a) + b, com a = 5 e b = 3, quanto vale c?',opts:['13','16','10'],ans:0,ok:'dobro(5) = 10, e 10 + 3 = 13.'}
  ],
  cpu:[
   {q:'No programa c = a + b, enquanto ADD 14 executa, para qual endereço o PC aponta?',opts:['1','2','14'],ans:1,ok:'ADD 14 está no endereço 1, mas o PC avançou durante a busca: na execução ele já aponta para 2.'},
   {q:'Quantas vezes o ciclo busca, decodificação e execução acontece no programa c = a + b?',opts:['3','4','8'],ans:1,ok:'Quatro: LDA, ADD, STA e HLT. O HLT também precisa ser buscado e decodificado para que o processador saiba que deve parar.'},
   {q:'Como o processador distingue uma instrução de um dado na memória?',opts:['pelo endereço para onde o PC aponta','por um bit especial em cada byte','porque instruções ficam numa memória separada'],ans:0,ok:'Os dois são só bytes na mesma memória. Um byte é executado como instrução quando o PC aponta para ele.'},
   {q:'Com a = 5 e b = 3, quanto vale o acumulador logo depois de LDA 13?',opts:['5','13','8'],ans:0,ok:'5. LDA 13 copia para o acumulador o conteúdo do endereço 13, onde está a; o 13 é só o endereço.'},
-  {q:'No programa if / else com a igual a b, quanto vale a flag Z depois do SUB b?',opts:['0','1','depende de c'],ans:1,ok:'1. Valores iguais dão diferença zero, e Z = 1 faz o JZ saltar para o bloco do if.'}
+  {q:'No programa if / else com a igual a b, quanto vale a flag Z depois do SUB b?',opts:['0','1','depende de c'],ans:1,ok:'1. Valores iguais dão diferença zero, e Z = 1 faz o JZ saltar para o bloco do if.'},
+  {q:'No programa função, o que CALL 5 guarda na pilha de retorno?',opts:['2, o endereço da instrução seguinte','5, o endereço da função','o valor de a'],ans:0,ok:'O PC já avançou para 2 na busca. CALL guarda esse 2 para saber para onde voltar.'},
+  {q:'O que a instrução RET faz?',opts:['o PC recebe o endereço do topo da pilha','o PC volta para o endereço 0','a pilha recebe o valor do PC'],ans:0,ok:'RET desempilha o endereço de volta e o coloca no PC. Quem empilha é o CALL.'},
+  {q:'A pilha de retorno tem 4 níveis. Quantas chamadas, uma dentro da outra, cabem nela?',opts:['4','16','ilimitadas'],ans:0,ok:'Cada chamada pendente ocupa um nível. Num PC, a pilha fica na RAM e comporta milhares.'}
  ],
  datapath:[
   {q:'Quantas micro-operações o ADD 14 gasta, contando busca e decodificação?',opts:['3','5','6'],ans:2,ok:'Seis: duas de busca (RI ← M[PC] e PC ← INC), uma de decodificação e três de execução (T0 ← OPER, T1 ← M[T0], A ← ADD).'},
@@ -1498,7 +1598,8 @@ const POOL={
   {q:'Monte o byte da instrução STA c e confirme.',check:()=>S.ins===0x4F,ok:'STA é 0100, e c mora no endereço 15, que é 1111: 0100 1111.'},
   {q:'Em ADD b (0010 1110), o que muda se o bit 0 for de 0 para 1?',opts:['a instrução passa a somar c','a instrução vira SUB b','a instrução passa a somar 1'],ans:0,ok:'O operando vai de 1110 para 1111, o endereço 15, onde mora c. O opcode não muda.'},
   {q:'Em LDI 5, o que o processador faz com o operando?',opts:['usa o próprio 5 como número','lê o conteúdo do endereço 5','salta para o endereço 5'],ans:0,ok:'LDI carrega o operando direto no acumulador. Nas outras instruções de dados, o operando é um endereço.'},
-  {q:'Monte uma instrução que salte para o endereço 9 só quando Z = 1, e confirme.',check:()=>S.ins===0x79,ok:'JZ é 0111 e 9 é 1001: 0111 1001.'}
+  {q:'Monte uma instrução que salte para o endereço 9 só quando Z = 1, e confirme.',check:()=>S.ins===0x79,ok:'JZ é 0111 e 9 é 1001: 0111 1001.'},
+  {q:'Monte a instrução que chama a função no endereço 5 e confirme.',check:()=>S.ins===0x85,ok:'CALL é 1000 e 5 é 0101: 1000 0101.'}
  ],
  escala:[
   {q:'Medido em atrasos de porta, quanto leva o vai-um em cascata de 8 bits?',opts:['cerca de 16','cerca de 4','cerca de 1'],ans:0,ok:'O vai-um atravessa duas portas por bit. Com o vai-um antecipado, cai para cerca de 4.'},
@@ -1517,6 +1618,14 @@ const POOL={
   {q:'O que preenche o espaço entre os fios?',opts:['um isolante, o dielétrico','ar','silício dopado'],ans:0,ok:'Sem isolante, fios vizinhos entrariam em curto.'},
   {q:'Por que as camadas de cima têm fios mais grossos?',opts:['levam alimentação e relógio por distâncias longas','porque são fabricadas primeiro','para proteger o chip da luz'],ans:0,ok:'Fio grosso tem menos resistência. As camadas finas de baixo fazem as ligações curtas entre células.'},
   {q:'Quantas camadas de metal tem, aproximadamente, um processador atual?',opts:['de 15 a 17','uma','mais de mil'],ans:0,ok:'Cada uma é feita com fotolitografia e corrosão, como a porta do transistor.'}
+ ],
+ mapa:[
+  {q:'Em que região fica int contador;, declarada fora das funções e sem valor inicial?',opts:['bss','data','pilha'],ans:0,ok:'Globais sem valor inicial vão para bss, que é zerada antes do main. Com valor inicial, iriam para data.'},
+  {q:'Onde fica a variável local r da função soma?',opts:['na pilha, no quadro de soma','no heap','em data'],ans:0,ok:'Variáveis locais moram no quadro da função, na pilha, e só existem enquanto ela roda.'},
+  {q:'Depois do return de soma, o que acontece com r?',opts:['o quadro de soma é liberado e r deixa de existir','r é copiada para o heap','r passa a morar em bss'],ans:0,ok:'O quadro inteiro é liberado. Por isso não se deve devolver o endereço de uma variável local.'},
+  {q:'Num microcontrolador desligado, onde está o 5 de int total = 5;?',opts:['na flash, de onde é copiado para a RAM no boot','na RAM','em lugar nenhum: total começa em 0'],ans:0,ok:'A RAM perde tudo sem energia. O valor inicial fica na flash e o código de partida o copia para a RAM antes do main.'},
+  {q:'Em int *p = malloc(4);, onde ficam p e o bloco que ele aponta?',opts:['p na pilha, o bloco no heap','os dois no heap','os dois na pilha'],ans:0,ok:'p é uma variável local que guarda um endereço; o bloco reservado pelo malloc mora no heap.'},
+  {q:'Toque numa linha do código cujo conteúdo fica na região text e confirme.',check:()=>S.mm.sel>=0&&MM_SRC[S.mm.sel][1]==='text',ok:'As linhas que abrem as funções, int soma(...) e int main(void), viram código de máquina em text.'}
  ],
  fa:[
   {q:'Das 8 combinações de A, B e Cin, quantas dão Cout = 1?',opts:['2','4','6'],ans:1,ok:'Quatro: sempre que pelo menos duas entradas valem 1. Cout é a função maioria.'},
@@ -1551,7 +1660,7 @@ const POOL={
   {q:'Na NAND com A = B = 1, que caminho fica fechado?',opts:['da saída ao GND, pelos dois nMOS em série','da saída a VDD','nenhum'],ans:0,ok:'Os dois nMOS conduzem e os dois pMOS estão cortados: a saída vai a 0.'},
   {q:'Quantos transistores tem uma NAND de 3 entradas em CMOS?',opts:['6','4','9'],ans:0,ok:'3 pMOS em paralelo e 3 nMOS em série: um par por entrada.'},
   {q:'A XOR com célula própria tem 12 transistores. Montada com 4 NAND, teria quantos?',opts:['16','12','8'],ans:0,ok:'4 NAND de 4 transistores cada. A célula própria é menor e mais rápida.'},
-  {q:'Na NOR de 3 entradas, deixe a saída em 1 e confirme.',check:()=>S.gate==='nor'&&S.in3&&!S.gl.a&&!S.gl.b&&!S.gl.c,ok:'Só com A, B e C em 0 os três pMOS em série conduzem. Escolha NOR, ative 3 entradas e zere as três.'}
+  {q:'Na NOR de 3 entradas, deixe a saída em 1 e confirme.',check:()=>S.gate==='nor'&&S.in3&&!S.cmosTest.on&&!S.gl.a&&!S.gl.b&&!S.gl.c,ok:'Só com A, B e C em 0 os três pMOS em série conduzem. Escolha NOR, ative 3 entradas e zere as três.'}
  ],
  layout:[
   {q:'No chip da NAND, os dois transistores da difusão N estão...',opts:['em série: os dois precisam conduzir para a saída ir a 0','em paralelo: basta um conduzir','em estágios separados'],ans:0,ok:'Uma única faixa de difusão N é cruzada pelas duas tiras de polissilício: a corrente atravessa os dois canais em sequência.'},
@@ -1605,9 +1714,14 @@ function nextCh(){const o=sceneOrder(),i=o.indexOf(cur());for(let k=1;k<=o.lengt
 function saveCh(){try{localStorage.setItem('c2si-prova2',JSON.stringify({draw:S.ch.draw,res:S.ch.res}));}catch(e){}}
 function okTxt(C){return typeof C.ok==='function'?C.ok():C.ok;}
 function answer(id,ok,pick){S.ch.res[id]={ok,pick,qi:S.ch.draw[id]};S.ch.armed=false;saveCh();chrome();}
-function resetCh(){S.ch.res={};S.ch.armed=false;drawCh(true);saveCh();}
+function resetCh(){S.ch.res={};S.ch.armed=false;drawCh(true);saveCh();if(S.ch.on)chFreeze();}
+function aluReady(){const ar=S.aluf==='add'||S.aluf==='sub';return ar?(S.cla?2.6:5.6):2.4;}
 function chThaw(){for(const id in S.st){S.st[id].run=true;S.st[id].until=0;}S.dc.m=0;S.mv.manual=false;S.ff.man=false;S.wave=[];}
-function chFreeze(){if(!S.ch.on)return;const st=clk(cur());st.run=false;st.until=0;S.dc.m=1;S.mv.manual=true;if(!S.ff.man)S.ff.ck=S.ff.ckNow||0;}
+function chFreeze(){if(!S.ch.on)return;const st=clk(cur());st.run=false;st.until=0;S.dc.m=1;S.mv.manual=true;if(!S.ff.man)S.ff.ck=S.ff.ckNow||0;const id=cur();if(id==='alu'&&st.t<aluReady())st.t=aluReady();if(!S.ch.res[id]&&CH[id]&&CH[id].check){if(id==='mapa')S.mm.sel=-1;if(id==='instr')S.ins=0x2E;
+  if(CH[id].check()){const ab=()=>{S.a=5;S.b=3;$('#in-a').value=5;$('#in-b').value=3;loadBit();};
+    ({ff:()=>{S.ff.d=1;},latch:()=>{S.lt.d=0;},alu:ab,flags:ab,cmos:()=>{S.gl.a=1;},mosfet:()=>{S.mv.v=0;const r=$('#vgs');if(r)r.value=0;},
+      pn:()=>{S.temp=300;S.pn=0;},silicio:()=>{S.dope='n';S.temp=300;}}[id]||(()=>{}))();
+    const tv=$('#temp-val'),tr=$('#temp');if(tr)tr.value=S.temp;if(tv)tv.textContent=S.temp+' K';}}}
 function chHtml(){const id=cur(),C=CH[id],r=S.ch.res[id];let h=`<span class="q">${C.q}</span>`;
   if(!r){
     if(C.opts)h+='<span class="op">'+C.opts.map((o,i)=>`<button type="button" data-pick="${i}">${o}</button>`).join('')+'</span>';
@@ -1629,18 +1743,18 @@ function setTr(s,tx,ty){c.setTransform(dpr*k*s,0,0,dpr*k*s,dpr*(ox+k*tx),dpr*(oy
 function drawScene(id,alpha,s,tx,ty,t,live){if(alpha<=.003)return;SA=alpha;setTr(s,tx,ty);al(1);c.shadowColor=T.gc;c.shadowBlur=T.glow*dpr;SCN[id].draw(clk(id).t,live);
   if(live){
     SCN[id].hots.forEach((h,i)=>{if(!h.morph&&!(id==='cmos'&&S.cmosTest.on))hotMark(h,t,i);});
-    if(kbdNav&&document.activeElement===cv&&zFocus>=0&&zFocus<zones.length){const z=zones[zFocus];c.save();c.setLineDash([5,4]);Ci(z.x,z.y,Math.max(22,(z.r||28)*.75),T.hot,2.6);c.restore();}
+    if(kbdNav&&document.activeElement===cv&&zFocus>=0&&zFocus<zones.length){const z=zones[zFocus];c.save();c.setLineDash([5,4]);if(z.box)Ln([[z.box[0]-3,z.box[1]-3],[z.box[0]+z.box[2]+3,z.box[1]-3],[z.box[0]+z.box[2]+3,z.box[1]+z.box[3]+3],[z.box[0]-3,z.box[1]+z.box[3]+3],[z.box[0]-3,z.box[1]-3]],T.hot,2.2);else Ci(z.x,z.y,Math.max(22,(z.r||28)*.75),T.hot,2.6);c.restore();}
   }al(1);}
 function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=stage.clientWidth||800;H=stage.clientHeight||800;const w=Math.round(W*dpr),h=Math.round(H*dpr);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}const k0=Math.min(W,H)/800;k=k0*uz;const lx=Math.max(0,(800*k-W)/2)+(uz>1?60:0),ly=Math.max(0,(800*k-H)/2)+(uz>1?60:0);upx=Math.max(-lx,Math.min(lx,upx));upy=Math.max(-ly,Math.min(ly,upy));ox=(W-800*k)/2+upx;oy=(H-800*k)/2+upy;}
 function paint(t){
   fit();const dt=Math.max(0,Math.min(.1,t-last));last=t;
-  for(const id in S.st){const q=S.st[id];if(q.run){q.t+=dt*(id==='cpu'||id==='datapath'?S.rate:1);if(q.until&&q.t>=q.until){q.t=q.until;q.until=0;q.run=false;renderCtl();}}}
+  for(const id in S.st){const q=S.st[id];if(q.run){q.t+=dt*(id==='cpu'||id==='datapath'?S.rate:1);if(q.until&&q.t>=q.until){q.t=q.until;q.until=0;q.run=false;if(id===cur())renderCtl();}}}
   if(!S.mv.manual){const r=$('#vgs');if(r)r.value=S.mv.v;}
   const sc=$('#scrub');if(sc&&DUR[cur()]&&document.activeElement!==sc){const d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);sc.value=Math.round(((clk(cur()).t%tot)/tot)*100);}
   c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.shadowBlur=0;c.fillStyle=T.bg;c.fillRect(0,0,cv.width,cv.height);zones=[];
   if(!anim&&queue.length){const op=queue.shift(),n=S.path.length;let a=null;
-    if(op.hot)a={parent:cur(),child:op.hot.to,hot:op.hot,dir:1};else if(n>1)a={parent:S.path[n-2].id,child:cur(),hot:S.path[n-1].hot,dir:-1};
-    if(a){a.t0=t;a.dur=reduce?.01:queue.length?.5:a.hot.morph?.9:1.25;anim=a;}}
+    if(op.hot){if(op.prep){const q=clk(op.hot.to);q.t=0;q.until=0;}a={parent:cur(),child:op.hot.to,hot:op.hot,dir:1};}else if(n>1)a={parent:S.path[n-2].id,child:cur(),hot:S.path[n-1].hot,dir:-1};
+    if(a){a.t0=t;a.dur=reduce?.01:op.fast?(queue.length?.26:.6):queue.length?.5:a.hot.morph?.9:1.25;anim=a;}}
   if(anim&&uz!==1)viewReset();
   if(anim&&(t-anim.t0)/anim.dur>=1){if(anim.dir>0)S.path.push({id:anim.child,hot:anim.hot});else S.path.pop();anim=null;chrome();}
   if(anim){const h=anim.hot;let p=(t-anim.t0)/anim.dur;if(anim.dir<0)p=1-p;
@@ -1653,12 +1767,12 @@ const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').m
 function loop(now){paint(now/1000);requestAnimationFrame(loop);}
 
 /* ---------- interface ---------- */
-function chrome(){const L=SCN[cur()];if(S.ch.last!==cur()){S.ch.last=cur();chFreeze();renderHelp();viewReset();}$('#name').textContent=L.n;$('#capt').textContent=L.t;cv.setAttribute('aria-label',`${L.n}: ${L.t}`);$('#capt').hidden=S.ch.on;$('#chal').hidden=!S.ch.on;$('#chal').innerHTML=S.ch.on?chHtml():'';
+function chrome(){const L=SCN[cur()];if(S.ch.last!==cur()&&!queue.length){S.ch.last=cur();if(cur()==='mapa')S.mm.sel=-1;chFreeze();renderHelp();viewReset();}$('#name').textContent=L.n;$('#capt').textContent=L.t;cv.setAttribute('aria-label',`${L.n}: ${L.t}`);$('#capt').hidden=S.ch.on;$('#chal').hidden=!S.ch.on;$('#chal').innerHTML=S.ch.on?chHtml():'';
   $('#crumbs').innerHTML=S.path.map((e,i)=>`${i?'<span aria-hidden="true">›</span>':''}<button type="button" data-i="${i}"${i===S.path.length-1?' aria-current="page"':''}>${SCN[e.id].n}</button>`).join('');
   renderCtl();const cr=$('#crumbs');cr.scrollLeft=cr.scrollWidth;
   $('#zout').disabled=S.path.length<2;$('#zin').disabled=!L.hots.length;
   syncUrl();}
-const CTL={flags:'op',ff:'ff',portas:'gate',cmos:'gate',layout:'gate',alu:'op',c:'prog',cpu:'prog',datapath:'prog',mem:'prog',mosfet:'mos',silicio:'dope',atomo:'dope',pn:'pn'};
+const CTL={mapa:'mm',flags:'op',ff:'ff',portas:'gate',cmos:'gate',layout:'gate',alu:'op',c:'prog',cpu:'prog',datapath:'prog',mem:'prog',mosfet:'mos',silicio:'dope',atomo:'dope',pn:'pn'};
 function renderCtl(){const id=cur(),q=CTL[id],st=clk(id);let h='';
   const b=(act,v,txt,on)=>`<button type="button" data-act="${act}" data-v="${v}"${on?' aria-pressed="true"':''}>${txt}</button>`;
   if(q==='mos')h=`<label for="vgs">${S.mv.p?'|VGS|':'VGS'} <input id="vgs" type="range" min="0" max="5" step="0.1" value="${S.mv.v}"></label>`+b('mtype','',S.mv.p?'ver nMOS':'ver pMOS')+(S.mv.manual?b('mauto','','automático'):'');
@@ -1666,23 +1780,24 @@ function renderCtl(){const id=cur(),q=CTL[id],st=clk(id);let h='';
   if(q==='prog')h=PROGS.map((z,i)=>b('prog',i,z.n,S.prog===i)).join('')+(prog().custom?b('editasm','','editar código'):'')+(id==='cpu'?b('pipe','','pipeline',S.pipe):'')+(id==='cpu'||id==='datapath'?b('rate','',`velocidade ${S.rate}×`):'');
   if(q==='gate')h=GORD.map(g=>b('gate',g,GT[g].n,S.gate===g)).join('')+(id==='cmos'?((S.gate==='nand'||S.gate==='nor')&&!S.cmosTest.on?b('in3','',S.in3?'3 entradas':'2 entradas',S.in3):'')+b('cmostest','','testar defeito',S.cmosTest.on):'');
   if(q==='op')h=AORD.map(k=>b('op',k,ALUF[k].n,S.aluf===k)).join('')+(S.aluf==='add'||S.aluf==='sub'?b('cla','',S.cla?'CLA (antecipado)':'cascata',S.cla):'');
+  if(q==='mm')h=b('mmmode','pc','PC',S.mm.mode==='pc')+b('mmmode','mcu','microcontrolador',S.mm.mode==='mcu');
   if(q==='pn')h=b('pn',0,'equilíbrio',S.pn===0)+b('pn',1,'direta',S.pn===1)+b('pn',2,'reversa',S.pn===2)+`<label for="temp"><span id="temp-val">${S.temp} K</span> <input id="temp" type="range" min="0" max="700" step="10" value="${S.temp}"></label>`;
   if(id==='latch')h=b('sram','',S.sram?'ver Latch 4 NAND (16T)':'ver Célula SRAM 6T',S.sram)+(S.sram?'':b('ltsrc','',S.lt.src==='borda'?'EN: detector de borda':'EN: manual',S.lt.src==='borda'));
   if(q==='ff')h=b('ffmode','ms','mestre-escravo',S.ff.mode==='ms')+b('ffmode','pulso','detector de borda',S.ff.mode==='pulso')+(S.ch.on?'':b('ffclk','',S.ff.man?'relógio manual':'relógio automático',S.ff.man));
   if(id==='dec'&&S.dc.m&&!S.ch.on)h+=b('dcauto','','automático');
-  h=b('base','',`base: ${baseLab()}`)+b('chal','',S.ch.on?`desafio ${nDone()}/${nTot()} · sair`:`desafio ${nDone()}/${nTot()}`,S.ch.on)+h;
+  h=(['c','cpu','datapath','mem','reg','alu','flags','instr'].includes(id)?b('base','',`base: ${baseLab()}`):'')+b('chal','',S.ch.on?`desafio ${nDone()}/${nTot()} · sair`:`desafio ${nDone()}/${nTot()}`,S.ch.on)+h;
   if(DUR[id]&&!(id==='ff'&&S.ch.on)){
     const d=DUR[id](),tot=d.reduce((x,y)=>x+y,0),pct=Math.min(100,Math.round(((st.t%tot)/tot)*100));
     h+=b('prev','','« passo')+b('pp','',st.run&&!st.until?'pausar':'continuar')+b('step','','passo »')+`<input id="scrub" type="range" min="0" max="100" value="${pct}" aria-label="Linha do tempo">`;
-  }else if(!['flags','portas','mux','cmos','instr','escala','chip'].includes(id)){
+  }else if(!['flags','portas','mux','cmos','instr','escala','chip'].includes(id)&&!(id==='ff'&&S.ch.on)){
     h+=b('pp','',st.run&&!st.until?'pausar':'continuar');
   }
   $('#ctl').innerHTML=h;}
 let dlgRet=null;function dlgBack(){const r=dlgRet;dlgRet=null;if(r&&document.contains(r))r.focus();else cv.focus();}
 function closeAsmEd(){$('#asm-ed').hidden=true;dlgBack();}
 function openAsmEd(){dlgRet=document.activeElement;const m=$('#asm-ed');$('#asm-txt').value=prog().raw||'';$('#asm-err').textContent='';m.hidden=false;$('#asm-txt').focus();}
-function ctlAct(act,v){const st=clk(cur());if(cur()==='dec'&&['pp','step','prev','dcauto'].includes(act))S.dc.m=0;if(cur()==='ff'&&!S.ch.on&&['pp','step','prev'].includes(act))S.ff.man=false;
-  switch(act){case 'pp':st.run=!(st.run&&!st.until);st.until=0;break;case 'step':if(DUR[cur()])stepNow(cur());break;case 'prev':if(DUR[cur()])stepPrev(cur());break;case 'mtype':S.mv.p=!S.mv.p;break;case 'mauto':S.mv.manual=false;break;case 'dope':S.dope=v;break;case 'pn':S.pn=+v;break;case 'gate':S.gate=v;S.cmosTest.on=false;break;case 'cmostest':S.cmosTest.on=!S.cmosTest.on;if(S.cmosTest.on){const A=S.gl.a,B=S.gl.b;S.cmosTest.p=[1-A,1-B];S.cmosTest.n=[A,B];}break;case 'cla':S.cla=!S.cla;clk('alu').t=0;clk('alu').until=0;break;case 'pipe':S.pipe=!S.pipe;break;case 'in3':S.in3=!S.in3;break;case 'dcauto':st.run=true;st.until=0;break;case 'ffmode':S.ff.mode=v;S.wave=[];Object.assign(SCN.ff.hots[0],v==='pulso'?{x:440,y:270}:{x:200,y:270});break;case 'ffclk':if(!S.ff.man)S.ff.ck=S.ff.ckNow;S.ff.man=!S.ff.man;break;case 'ltsrc':S.lt.src=S.lt.src==='borda'?'manual':'borda';S.lt.ck=0;S.wave=[];break;case 'sram':S.sram=!S.sram;S.wave=[];applyLayout();break;case 'base':S.base=S.base==='dec'?'sig':S.base==='sig'?'hex':'dec';break;case 'editasm':openAsmEd();return;case 'op':S.aluf=v;loadBit();clk('alu').t=0;clk('alu').until=0;break;case 'prog':setProg(+v);break;case 'rate':S.rate=S.rate>=4?1:S.rate*2;break;case 'chal':S.ch.on=!S.ch.on;if(S.ch.on)chFreeze();else chThaw();chrome();return;}
+function ctlAct(act,v){const st=clk(cur());const resume=act==='pp'&&!(st.run&&!st.until);if(cur()==='dec'&&(['step','prev','dcauto'].includes(act)||resume))S.dc.m=0;if(cur()==='ff'&&!S.ch.on&&(['step','prev'].includes(act)||resume))S.ff.man=false;if(cur()==='mapa'&&['pp','step','prev'].includes(act))S.mm.sel=-1;if(act==='prev')S.wave=[];
+  switch(act){case 'pp':st.run=!(st.run&&!st.until);st.until=0;break;case 'step':if(DUR[cur()])stepNow(cur());break;case 'prev':if(DUR[cur()])stepPrev(cur());break;case 'mtype':S.mv.p=!S.mv.p;break;case 'mauto':S.mv.manual=false;break;case 'dope':S.dope=v;break;case 'pn':S.pn=+v;break;case 'gate':S.gate=v;S.cmosTest.on=false;break;case 'cmostest':S.cmosTest.on=!S.cmosTest.on;if(S.cmosTest.on){const A=S.gl.a,B=S.gl.b;S.cmosTest.p=[1-A,1-B];S.cmosTest.n=[A,B];}break;case 'cla':S.cla=!S.cla;clk('alu').t=clk('alu').run?0:aluReady();clk('alu').until=0;break;case 'pipe':S.pipe=!S.pipe;break;case 'in3':S.in3=!S.in3;break;case 'mmmode':S.mm.mode=v;break;case 'dcauto':st.run=true;st.until=0;break;case 'ffmode':S.ff.mode=v;S.wave=[];Object.assign(SCN.ff.hots[0],v==='pulso'?{x:440,y:270}:{x:200,y:270});break;case 'ffclk':if(!S.ff.man)S.ff.ck=S.ff.ckNow;S.ff.man=!S.ff.man;break;case 'ltsrc':S.lt.src=S.lt.src==='borda'?'manual':'borda';S.lt.ck=0;S.wave=[];break;case 'sram':S.sram=!S.sram;S.wave=[];applyLayout();break;case 'base':S.base=S.base==='dec'?'sig':S.base==='sig'?'hex':'dec';break;case 'editasm':openAsmEd();return;case 'op':S.aluf=v;loadBit();clk('alu').t=clk('alu').run?0:aluReady();clk('alu').until=0;break;case 'prog':setProg(+v);break;case 'rate':S.rate=S.rate>=4?1:S.rate*2;break;case 'chal':S.ch.on=!S.ch.on;if(S.ch.on)chFreeze();else chThaw();chrome();return;}
   syncUrl();renderCtl();}
 /* mapa */
 function mapHtml(){const seen=new Set(),walk=id=>{seen.add(id);const kids=SCN[id].hots.map(h=>h.to).filter(k=>!seen.has(k)&&seen.add(k));
@@ -1691,6 +1806,13 @@ function mapHtml(){const seen=new Set(),walk=id=>{seen.add(id);const kids=SCN[id
 function openMap(o){const m=$('#map');if(o&&m.hidden)dlgRet=document.activeElement;const was=!m.hidden;m.hidden=!o;if(!o&&was)dlgBack();if(o){m.innerHTML=mapHtml();const b=m.querySelector('[aria-current]');if(b)b.focus();}}
 function jumpTo(id){const p=findPath(id);if(!p)return;queue=[];anim=null;S.path=p;S.wave=[];zFocus=-1;const q=clk(id);q.t=0;q.until=0;chrome();}
 function zin(h){if(anim||queue.length)return;S.wave=[];zFocus=-1;h=h||SCN[cur()].hots.find(x=>x.main)||SCN[cur()].hots[0];if(h){if(h.gate){S.gate=h.gate;S.cmosTest.on=false;}const q=clk(h.to);q.t=0;q.until=0;queue.push({hot:h});}}
+function bfsPath(from,id,ban){const seen=new Set(ban),q=[[from,[]]];seen.add(from);while(q.length){const [at,tr]=q.shift();if(at===id)return tr;for(const h of SCN[at].hots){if(seen.has(h.to))continue;seen.add(h.to);q.push([h.to,tr.concat({id:h.to,hot:h})]);}}return null;}
+function goTo(id){if(anim||queue.length)return jumpTo(id);if(id===cur()||!SCN[id])return;
+  // 1) destino abaixo da cena atual: entra direto; 2) senão, recua até o ancestral comum com o caminho principal
+  let best=null;const sub=bfsPath(cur(),id,S.path.map(e=>e.id));if(sub)best={c:sub.length,outs:0,ins:sub};
+  const P=findPath(id);if(P){let L=0;while(L<S.path.length&&L<P.length&&S.path[L].id===P[L].id)L++;const outs=S.path.length-L,c=outs+P.length-L;if(!best||!outs||c<best.c)best={c,outs,ins:P.slice(L)};}
+  if(!best)return jumpTo(id);const fast=best.c>4;S.wave=[];zFocus=-1;
+  for(let i=0;i<best.outs;i++)queue.push({out:1,fast});best.ins.forEach(e=>queue.push({hot:e.hot,fast,prep:1}));}
 function zout(n){if(anim||queue.length||n===0)return;S.wave=[];zFocus=-1;for(let i=0;i<(n||1);i++)queue.push({out:1});}
 function setTheme(n){T=TH[n];document.documentElement.className=n;$('#theme').textContent=n==='papel'?'fósforo':'papel';try{localStorage.setItem('c2si-tema',n);}catch(e){}}
 function hotAt(x,y){if(cur()==='cmos'&&S.cmosTest.on)return null;return SCN[cur()].hots.filter(h=>x>=h.x-14&&x<=h.x+h.w+14&&y>=h.y-14&&y<=h.y+h.h+14).sort((p,q)=>p.w*p.h-q.w*q.h)[0]||null;}
@@ -1701,18 +1823,18 @@ $('#ctl').addEventListener('click',e=>{const b=e.target.closest('button');if(b)c
 $('#ctl').addEventListener('input',e=>{
   if(e.target.id==='vgs'){const was=S.mv.manual;S.mv.manual=true;S.mv.v=+e.target.value;if(!was){renderCtl();const r=$('#vgs');if(r)r.focus();}}
   if(e.target.id==='temp'){S.temp=+e.target.value;const tv=$('#temp-val');if(tv)tv.textContent=S.temp+' K';syncUrl();}
-  if(e.target.id==='scrub'&&DUR[cur()]){if(cur()==='dec')S.dc.m=0;if(cur()==='ff'&&!S.ch.on)S.ff.man=false;const st=clk(cur()),d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);st.t=(+e.target.value/100)*tot;st.until=0;st.run=false;}
+  if(e.target.id==='scrub'&&DUR[cur()]){if(cur()==='dec')S.dc.m=0;if(cur()==='ff'&&!S.ch.on)S.ff.man=false;const st=clk(cur()),d=DUR[cur()](),tot=d.reduce((x,y)=>x+y,0);st.t=Math.min(tot-.01,(+e.target.value/100)*tot);st.until=0;st.run=false;S.wave=[];if(cur()==='mapa')S.mm.sel=-1;}
 });
 $('#ctl').addEventListener('change',e=>{if(e.target.id==='scrub')renderCtl();});
 $('#asm-cancel').addEventListener('click',closeAsmEd);
 $('#asm-save').addEventListener('click',()=>{
   const raw=$('#asm-txt').value,res=parseAsm(raw);
   if(res.err){$('#asm-err').textContent=res.err;return;}
-  PROGS[3].code=res.code;PROGS[3].raw=raw;segKey='';uopKey='';
-  setProg(3);renderCtl();closeAsmEd();
+  PROGS[4].code=res.code;PROGS[4].raw=raw;segKey='';uopKey='';
+  setProg(4);renderCtl();closeAsmEd();
 });
 $('#mapb').addEventListener('click',()=>openMap(true));
-$('#map').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.reset){resetCh();chrome();openMap(true);return;}if(b.dataset.go)jumpTo(b.dataset.go);openMap(false);});
+$('#map').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.reset){if(!b.dataset.armed&&nDone()){b.dataset.armed='1';b.textContent='apagar as respostas? toque de novo';return;}resetCh();chrome();openMap(true);return;}if(b.dataset.go)goTo(b.dataset.go);openMap(false);});
 $('#chal').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=cur(),C=CH[id];
   if(b.dataset.next){const nx=nextCh();if(nx)jumpTo(nx);return;}
   if(b.dataset.reset){if(!S.ch.armed&&nDone()&&nDone()<nTot()){S.ch.armed=true;chrome();return;}resetCh();const f=sceneOrder().find(k=>CH[k]);if(f===cur())chrome();else jumpTo(f);return;}
@@ -1725,9 +1847,10 @@ document.addEventListener('fullscreenchange',()=>{$('#fs').textContent=document.
 if(document.fullscreenEnabled)$('#fs').addEventListener('click',()=>{try{(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>{});}catch(e){}});else $('#fs').hidden=true;
 $('#theme').addEventListener('click',()=>setTheme(T===TH.papel?'fosforo':'papel'));
 $('#vals').addEventListener('submit',e=>e.preventDefault());
+['a','b'].forEach(n=>$('#in-'+n).addEventListener('blur',e=>{if(e.target.value!==String(S[n]))e.target.value=S[n];}));
 ['a','b'].forEach(n=>$('#in-'+n).addEventListener('input',e=>{const v=Math.max(0,Math.min(255,parseInt(e.target.value,10)||0));S[n]=v;
   if(e.target.value!==''&&String(v)!==e.target.value)e.target.value=v;
-  ['cpu','alu','reg','datapath'].forEach(id=>{const q=clk(id);q.t=0;q.until=0;});loadBit();syncUrl();if(S.ch.on)chrome();}));
+  ['cpu','alu','reg','datapath'].forEach(id=>{const q=clk(id);q.t=id==='alu'&&!q.run?aluReady():0;q.until=0;});S.wave=[];loadBit();syncUrl();if(S.ch.on)chrome();}));
 /* pinça e arrasto: ampliam a cena sem trocar de nível */
 function viewReset(){uz=1;upx=upy=0;const b=$('#zr');if(b)b.hidden=true;}
 function viewZoom(nz,mx,my){const r=cv.getBoundingClientRect(),x=mx-r.left,y=my-r.top,vx=(x-ox)/k,vy=(y-oy)/k,k0=Math.min(W,H)/800;uz=Math.max(1,Math.min(4,nz));const nk=k0*uz;upx=x-vx*nk-(W-800*nk)/2;upy=y-vy*nk-(H-800*nk)/2;if(uz===1)upx=upy=0;$('#zr').hidden=uz===1;}
@@ -1755,12 +1878,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Tab')kbdNav=true;if(!$('#asm
 if(e.ctrlKey||e.metaKey||e.altKey||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
   if(e.key==='?'||e.key==='h'){toggleHelp();e.preventDefault();return;}if(e.key==='Escape'&&!$('#help').hidden){toggleHelp(false);e.preventDefault();return;}if(!$('#map').hidden){if(e.key==='Escape'||e.key==='m')openMap(false);return;}
   if(!$('#help').hidden&&e.key!=='Tab')return;
-  if(document.activeElement===cv&&zones.length){
-    if(e.key==='Tab')kbdNav=true;
+  if(document.activeElement===cv&&zones.length&&$('#help').hidden){
     if(e.key==='Tab'){if(!e.shiftKey&&zFocus<zones.length-1){zFocus++;e.preventDefault();return;}if(e.shiftKey&&zFocus>0){zFocus--;e.preventDefault();return;}}
     if((e.key==='Enter'||e.key===' ')&&zFocus>=0&&zFocus<zones.length){zones[zFocus].fn();e.preventDefault();return;}
   }
-  if(e.key===' '&&e.target.tagName!=='BUTTON'){ctlAct('pp');e.preventDefault();}if(e.key==='.'||e.key==='n'){ctlAct('step');e.preventDefault();}if(e.key===','){ctlAct('prev');e.preventDefault();}if(e.key==='m')openMap(true);if(e.key==='d')ctlAct('chal');if(e.key==='v')setTheme(T===TH.papel?'fosforo':'papel');if(e.key==='f'&&!$('#fs').hidden)$('#fs').click();if(['ArrowDown','ArrowRight','+','='].includes(e.key)){zin();e.preventDefault();}if(['ArrowUp','ArrowLeft','-','Escape'].includes(e.key)){zout();e.preventDefault();}});
+  const has=a=>!!document.querySelector(`#ctl [data-act="${a}"]`);
+  if(e.key===' '&&e.target.tagName!=='BUTTON'){if(has('pp'))ctlAct('pp');e.preventDefault();}if((e.key==='.'||e.key==='n')&&has('step')){ctlAct('step');e.preventDefault();}if(e.key===','&&has('prev')){ctlAct('prev');e.preventDefault();}if(e.key==='m')openMap(true);if(e.key==='d')ctlAct('chal');if(e.key==='v')setTheme(T===TH.papel?'fosforo':'papel');if(e.key==='f'&&!$('#fs').hidden)$('#fs').click();if(['ArrowDown','ArrowRight','+','='].includes(e.key)){zin();e.preventDefault();}if(['ArrowUp','ArrowLeft','-','Escape'].includes(e.key)){zout();e.preventDefault();}});
 function syncUrl(){try{const h=cur();if(location.hash.slice(1)!==h)history.replaceState(null,'','#'+h);}catch(e){}}
 function applyHash(){return location.hash.slice(1).split('?')[0];}
 function jump(){const id=applyHash();applyLayout();loadBit();if(SCN[id]&&id!==cur())jumpTo(id);else chrome();}
